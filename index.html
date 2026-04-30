@@ -1,0 +1,105 @@
+import { useState } from "react"
+
+const GRP = {
+  A:['México','Sudáfrica','Corea del Sur','Chequia'],
+  B:['Canadá','Suiza','Qatar','Bosnia y Herz.'],
+  C:['Brasil','Marruecos','Haití','Escocia'],
+  D:['EE.UU.','Paraguay','Australia','Turquía'],
+  E:['Alemania','Curazao','Costa de Marfil','Ecuador'],
+  F:['Países Bajos','Japón','Túnez','Suecia'],
+  G:['Bélgica','Egipto','Irán','Nueva Zelanda'],
+  H:['España','Cabo Verde','Arabia Saudita','Uruguay'],
+  I:['Francia','Senegal','Noruega','Iraq'],
+  J:['Argentina','Argelia','Austria','Jordania'],
+  K:['Portugal','Colombia','Uzbekistán','R.D. Congo'],
+  L:['Inglaterra','Croacia','Ghana','Panamá'],
+}
+const MATCHES=(()=>{let n=1,m=[];for(const [g,t] of Object.entries(GRP))for(const [i,j] of [[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]])m.push({id:`m${n++}`,g,t1:t[i],t2:t[j]});return m})()
+
+export default function App(){
+  const [name,setName]=useState('')
+  const [preds,setPreds]=useState({})
+  const [grp,setGrp]=useState('A')
+  const [step,setStep]=useState('form')
+  const [copied,setCopied]=useState(false)
+  const grps=Object.keys(GRP)
+  const upd=(id,f,v)=>setPreds(p=>({...p,[id]:{...(p[id]||{}),[f]:v===''?'':Math.max(0,Math.min(20,parseInt(v)||0)).toString()}}))
+  const filled=MATCHES.filter(m=>{const p=preds[m.id];return p&&p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!==''}).length
+  const grpFilled=g=>MATCHES.filter(m=>m.g===g).filter(m=>{const p=preds[m.id];return p&&p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!==''}).length
+  const genCode=()=>`PRODE26|${name.trim()}|${MATCHES.map(m=>{const p=preds[m.id];return(!p||p.s1===undefined||p.s1===''||p.s2===undefined||p.s2==='')?'?':`${p.s1}-${p.s2}`}).join(',')}`
+  const waUrl=()=>`https://wa.me/?text=${encodeURIComponent('⚽ *PRODE MUNDIAL 2026*\n👤 *'+name.trim()+'*\n\n📋 Mi código:\n\n'+genCode())}`
+
+  const pill=a=>({padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:12,fontWeight:600,whiteSpace:'nowrap',background:a?'#6a0dad':'#ebebeb',color:a?'white':'#555'})
+  const si={width:36,textAlign:'center',background:'#e8f0fe',border:'1px solid #c5cae9',borderRadius:6,color:'#1a1a2e',fontSize:15,fontWeight:700,padding:'4px 2px',outline:'none'}
+
+  if(step==='code')return(
+    <div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:480,margin:'0 auto',padding:'16px 14px',fontFamily:'system-ui,sans-serif'}}>
+      <div style={{textAlign:'center',marginBottom:20}}>
+        <div style={{fontSize:44,marginBottom:8}}>✅</div>
+        <div style={{fontSize:20,fontWeight:800,color:'#6a0dad'}}>¡Pronósticos listos!</div>
+        <div style={{fontSize:13,color:'#888',marginTop:4}}>{name} · {filled}/72 partidos</div>
+      </div>
+      <div style={{background:'white',borderRadius:12,padding:14,marginBottom:14,border:'1px solid #e0e4ea'}}>
+        <div style={{fontSize:13,color:'#888',marginBottom:8}}>📋 Tu código:</div>
+        <div style={{background:'#f4f5f7',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#3d5afe',wordBreak:'break-all',fontFamily:'monospace',lineHeight:1.5,maxHeight:120,overflowY:'auto'}}>{genCode()}</div>
+        <button onClick={()=>navigator.clipboard?.writeText(genCode()).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)})}
+          style={{width:'100%',marginTop:10,padding:'10px',background:copied?'#27ae60':'#6a0dad',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+          {copied?'✓ ¡Copiado!':'📋 Copiar código'}</button>
+      </div>
+      <a href={waUrl()} target="_blank" style={{display:'block',background:'#25D366',borderRadius:12,padding:'14px',textAlign:'center',color:'white',fontWeight:800,fontSize:16,textDecoration:'none',marginBottom:14,boxShadow:'0 4px 16px rgba(37,211,102,0.3)'}}>📲 Enviar por WhatsApp</a>
+      <button onClick={()=>setStep('form')} style={{width:'100%',padding:12,background:'transparent',border:'1px solid #e0e4ea',borderRadius:10,color:'#888',cursor:'pointer',fontSize:14}}>← Volver a editar</button>
+    </div>
+  )
+
+  return(
+    <div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:480,margin:'0 auto',paddingBottom:80,fontFamily:'system-ui,sans-serif'}}>
+      <div style={{background:'linear-gradient(135deg,#6a0dad,#4a0090)',padding:'14px 16px 12px',textAlign:'center',position:'sticky',top:0,zIndex:50,borderBottom:'1px solid #dde3ec'}}>
+        <div style={{fontSize:17,fontWeight:800,color:'#f0c030'}}>⚽ PRODE MUNDIAL 2026</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,0.7)',marginTop:2}}>Completá tus pronósticos y mandáselos al admin</div>
+      </div>
+      <div style={{padding:'12px 12px 0'}}>
+        <div style={{background:'white',borderRadius:12,padding:14,marginBottom:12,border:'1px solid #e0e4ea'}}>
+          <div style={{fontSize:13,color:'#666',marginBottom:8}}>👤 Tu nombre</div>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Ej: Lucas García"
+            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:'1px solid #e0e4ea',background:'#f4f5f7',color:'#1a1a2e',fontSize:15,outline:'none'}}/>
+        </div>
+        <div style={{background:'white',borderRadius:10,padding:'10px 14px',marginBottom:12,border:'1px solid #e0e4ea',display:'flex',alignItems:'center',gap:12}}>
+          <div style={{flex:1,background:'#dde3ec',borderRadius:4,height:6}}>
+            <div style={{background:filled===72?'#27ae60':'#6a0dad',width:`${(filled/72)*100}%`,height:'100%',borderRadius:4,transition:'width 0.3s'}}/>
+          </div>
+          <span style={{fontSize:13,color:filled===72?'#27ae60':'#6a0dad',fontWeight:700,whiteSpace:'nowrap'}}>{filled}/72</span>
+        </div>
+        <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:8,marginBottom:10}}>
+          {grps.map(g=><button key={g} onClick={()=>setGrp(g)} style={pill(grp===g)}>G{g}{grpFilled(g)===6?' ✓':''}</button>)}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>
+          {MATCHES.filter(m=>m.g===grp).map(m=>{
+            const p=preds[m.id]||{}
+            const done=p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!==''
+            return(
+              <div key={m.id} style={{background:'white',border:`1px solid ${done?'#27ae60':'#e0e4ea'}`,borderRadius:10,padding:'10px 12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{flex:1,textAlign:'right',fontSize:13,color:'#1a1a2e',fontWeight:500}}>{m.t1}</span>
+                  <input type="number" value={p.s1??''} min="0" max="20" onChange={e=>upd(m.id,'s1',e.target.value)} style={si}/>
+                  <span style={{color:'#aaa',fontWeight:700}}>-</span>
+                  <input type="number" value={p.s2??''} min="0" max="20" onChange={e=>upd(m.id,'s2',e.target.value)} style={si}/>
+                  <span style={{flex:1,fontSize:13,color:'#1a1a2e',fontWeight:500}}>{m.t2}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div style={{display:'flex',gap:8,marginBottom:8}}>
+          {grp>'A'&&<button onClick={()=>setGrp(String.fromCharCode(grp.charCodeAt(0)-1))} style={{flex:1,padding:10,background:'white',border:'1px solid #e0e4ea',borderRadius:10,color:'#888',cursor:'pointer',fontSize:14}}>← G{String.fromCharCode(grp.charCodeAt(0)-1)}</button>}
+          {grp<'L'&&<button onClick={()=>setGrp(String.fromCharCode(grp.charCodeAt(0)+1))} style={{flex:1,padding:10,background:'#6a0dad',border:'none',borderRadius:10,color:'white',cursor:'pointer',fontSize:14,fontWeight:700}}>G{String.fromCharCode(grp.charCodeAt(0)+1)} →</button>}
+        </div>
+      </div>
+      <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:480,background:'white',borderTop:'1px solid #dde3ec',padding:'10px 14px'}}>
+        <button onClick={()=>{if(!name.trim()){alert('Ingresá tu nombre primero');return};setStep('code')}} disabled={filled===0}
+          style={{width:'100%',padding:'13px',background:name.trim()&&filled>0?'#25D366':'#ccc',border:'none',borderRadius:12,color:'white',fontWeight:800,fontSize:16,cursor:name.trim()&&filled>0?'pointer':'not-allowed'}}>
+          {filled===72?'✅ Generar código (72/72)':`📲 Generar código (${filled}/72)`}
+        </button>
+      </div>
+    </div>
+  )
+}
