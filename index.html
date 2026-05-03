@@ -660,29 +660,46 @@ function Admin(){
       {/* ══ JUGADORES ══ */}
       {tab==='jugadores'&&(
         <div style={{padding:'10px 10px 0'}}>
-          <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
-            <div style={{fontSize:15,fontWeight:700,color:'#f0c030',marginBottom:8}}>👥 Jugadores ({pp.length}/50)</div>
+          <div style={{background:'white',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
+            <div style={{fontSize:15,fontWeight:700,color:'#6a0dad',marginBottom:8}}>👥 Jugadores ({pp.length}/50)</div>
             <div style={{display:'flex',gap:6}}>
               <input value={newN} onChange={e=>setNewN(e.target.value)}
                 onKeyDown={e=>{if(e.key==='Enter'&&newN.trim()&&pp.length<50){svP([...pp,{id:`p${Date.now()}`,name:newN.trim()}]);setNewN('');showToast('✓ Agregado')}}}
-                placeholder="Nombre" style={{flex:1,padding:'8px 10px',borderRadius:8,border:'1px solid #e0e4ea',background:'#e8f0fe',color:'white',fontSize:14,outline:'none'}}/>
+                placeholder="Nombre" style={{flex:1,padding:'8px 10px',borderRadius:8,border:'1px solid #e0e4ea',background:'#f4f5f7',color:'#1a1a2e',fontSize:14,outline:'none'}}/>
               <button onClick={()=>{if(!newN.trim()||pp.length>=50)return;svP([...pp,{id:`p${Date.now()}`,name:newN.trim()}]);setNewN('');showToast('✓ Agregado')}}
-                style={{padding:'8px 14px',background:pp.length>=50||!newN.trim()?'#333':'#f0c030',color:'#1a1a2e',borderRadius:8,fontWeight:700,border:'none',cursor:'pointer',fontSize:15}}>+</button>
+                style={{padding:'8px 14px',background:pp.length>=50||!newN.trim()?'#ccc':'#6a0dad',color:'white',borderRadius:8,fontWeight:700,border:'none',cursor:'pointer',fontSize:15}}>+</button>
             </div>
+            <div style={{fontSize:11,color:'#aaa',marginTop:8}}>▲▼ para reordenar · tocá el nombre para editar</div>
           </div>
           {pp.map((p,i)=>{
             const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length
+            const isEditing=editingId===p.id
+            const moveUp=()=>{if(i===0)return;const r=[...pp];[r[i-1],r[i]]=[r[i],r[i-1]];svP(r)}
+            const moveDown=()=>{if(i===pp.length-1)return;const r=[...pp];[r[i],r[i+1]]=[r[i+1],r[i]];svP(r)}
             return(
-              <div key={p.id} style={{background:'#ffffff',borderRadius:8,padding:'9px 12px',marginBottom:5,border:'1px solid #e0e4ea'}}>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <div style={{width:22,height:22,borderRadius:'50%',background:'#e8f0fe',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#6a0dad',fontWeight:700}}>{i+1}</div>
-                  <span style={{flex:1,fontSize:13,color:'#222'}}>{p.name}</span>
-                  <span style={{fontSize:10,color:done===72?'#2ecc71':done>0?'#f0c030':'#666'}}>{done}/72</span>
+              <div key={p.id} style={{background:'white',borderRadius:8,padding:'9px 12px',marginBottom:5,border:'1px solid #e0e4ea'}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <div style={{display:'flex',flexDirection:'column',gap:0,flexShrink:0}}>
+                    <button onClick={moveUp} style={{background:'transparent',border:'none',color:i===0?'#ddd':'#6a0dad',cursor:i===0?'default':'pointer',fontSize:13,lineHeight:1,padding:'1px 4px',fontWeight:900}}>▲</button>
+                    <button onClick={moveDown} style={{background:'transparent',border:'none',color:i===pp.length-1?'#ddd':'#6a0dad',cursor:i===pp.length-1?'default':'pointer',fontSize:13,lineHeight:1,padding:'1px 4px',fontWeight:900}}>▼</button>
+                  </div>
+                  <div style={{width:22,height:22,borderRadius:'50%',background:'#ede9f7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#6a0dad',fontWeight:700,flexShrink:0}}>{i+1}</div>
+                  {isEditing?(
+                    <input autoFocus value={editingName} onChange={e=>setEditingName(e.target.value)}
+                      onBlur={()=>{if(editingName.trim())svP(pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x));setEditingId(null)}}
+                      onKeyDown={e=>{if(e.key==='Enter'){if(editingName.trim())svP(pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x));setEditingId(null)}if(e.key==='Escape')setEditingId(null)}}
+                      style={{flex:1,fontSize:14,color:'#1a1a2e',border:'2px solid #6a0dad',borderRadius:6,padding:'4px 8px',outline:'none'}}/>
+                  ):(
+                    <span onClick={()=>{setEditingId(p.id);setEditingName(p.name)}} style={{flex:1,fontSize:14,color:'#1a1a2e',cursor:'pointer'}}>
+                      {p.name} <span style={{fontSize:10,color:'#bbb'}}>✏️</span>
+                    </span>
+                  )}
+                  <span style={{fontSize:10,color:done===72?'#27ae60':done>0?'#6a0dad':'#ccc',flexShrink:0}}>{done}/72</span>
                   <button onClick={()=>{const r2={...rr};delete r2[p.id];svAll(pp.filter(x=>x.id!==p.id),mm,r2);setSimResult(null);showToast('Eliminado','#e74c3c')}}
-                    style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:20,lineHeight:1,padding:'0 2px'}}>×</button>
+                    style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:20,lineHeight:1,padding:'0 2px',flexShrink:0}}>×</button>
                 </div>
-                <div style={{marginTop:5,background:'#e8f0fe',borderRadius:3,height:3}}>
-                  <div style={{background:done===72?'#2ecc71':'#f0c030',width:`${(done/72)*100}%`,height:'100%',borderRadius:3}}/>
+                <div style={{marginTop:5,background:'#f0f2f5',borderRadius:3,height:3,marginLeft:62}}>
+                  <div style={{background:done===72?'#27ae60':'#6a0dad',width:`${(done/72)*100}%`,height:'100%',borderRadius:3}}/>
                 </div>
               </div>
             )
@@ -701,7 +718,7 @@ function Admin(){
             return(
               <div key={p.id} onClick={()=>{setSelP(p);setPGrp('ALL')}} style={{background:'#ffffff',borderRadius:10,padding:'10px 14px',marginBottom:5,display:'flex',alignItems:'center',gap:10,cursor:'pointer',border:'1px solid #e0e4ea'}}>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:600,fontSize:14}}>{p.name}</div>
+                  <div style={{fontWeight:600,fontSize:14,color:'#1a1a2e'}}>{p.name}</div>
                   <div style={{marginTop:5,background:'#e8f0fe',borderRadius:4,height:3}}>
                     <div style={{background:done===72?'#2ecc71':'#f0c030',width:`${(done/72)*100}%`,height:'100%',borderRadius:4}}/>
                   </div>
