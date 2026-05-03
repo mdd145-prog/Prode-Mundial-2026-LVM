@@ -328,9 +328,7 @@ function Jugador(){
 
 // ── ADMIN ─────────────────────────────────────────────────
 function Admin(){
-  const ADMIN_PIN='2026'
-  const [pin,setPin]=useState(()=>sessionStorage.getItem('wc26ok')==='1')
-  const [pinInput,setPinInput]=useState('')
+
   const [tab,setTab]=useState('tabla')
   const [pp,setPP]=useState(()=>LS.get('wc26p',[]))
   const [mm,setMM]=useState(()=>LS.get('wc26m',MATCHES))
@@ -344,7 +342,10 @@ function Admin(){
   const [importLog,setImportLog]=useState(null)
   const [dayFilter,setDayFilter]=useState('')
   const [simResult,setSimResult]=useState(null)
-  const [tablaMode,setTablaMode]=useState(null) // null | 'oficial' | 'nooficial'
+  const [tablaMode,setTablaMode]=useState(null)
+  const [dragIdx,setDragIdx]=useState(null)
+  const [editingId,setEditingId]=useState(null)
+  const [editingName,setEditingName]=useState('') // null | 'oficial' | 'nooficial'
   const grps=Object.keys(GRP)
   const played=mm.filter(m=>m.s1!==null).length
   const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
@@ -389,18 +390,7 @@ function Admin(){
   const si={width:36,textAlign:'center',background:'#e8f0fe',border:'1px solid #333',borderRadius:6,color:'white',fontSize:16,fontWeight:700,padding:'4px 2px',outline:'none'}
   const pill=a=>({padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:a?'#6a0dad':'#ebebeb',color:a?'white':'#555'})
 
-  if(!pin)return(
-    <div style={{minHeight:'100vh',background:'#f0f2f5',color:'white',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16,padding:24}}>
-      <div style={{fontSize:48}}>🔐</div>
-      <div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>Panel Admin</div>
-      <input type="password" value={pinInput} onChange={e=>setPinInput(e.target.value)}
-        onKeyDown={e=>e.key==='Enter'&&(pinInput===ADMIN_PIN?(sessionStorage.setItem('wc26ok','1'),setPin(true)):(setPinInput(''),alert('PIN incorrecto')))}
-        placeholder="PIN" style={{padding:'12px 20px',borderRadius:10,border:'1px solid #e0e4ea',background:'#e8f0fe',color:'white',fontSize:20,textAlign:'center',outline:'none',width:160}}/>
-      <button onClick={()=>pinInput===ADMIN_PIN?(sessionStorage.setItem('wc26ok','1'),setPin(true)):(setPinInput(''),alert('PIN incorrecto'))}
-        style={{padding:'12px 32px',background:'#f0c030',border:'none',borderRadius:10,fontWeight:800,fontSize:16,cursor:'pointer'}}>Entrar</button>
-      <div style={{fontSize:11,color:'#555'}}>PIN: 2026</div>
-    </div>
-  )
+
 
   return(
     <div style={{minHeight:'100vh',background:'#f0f2f5',color:'white',maxWidth:430,margin:'0 auto',paddingBottom:72}}>
