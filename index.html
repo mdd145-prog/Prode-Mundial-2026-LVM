@@ -13,6 +13,9 @@ body{margin:0;background:#f0f2f5;font-family:system-ui,sans-serif}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
 input[type=number]{-moz-appearance:textfield}
 ::-webkit-scrollbar{height:4px;width:4px}::-webkit-scrollbar-track{background:#e0e4ea}::-webkit-scrollbar-thumb{background:#f0c030;border-radius:2px}
+input{-webkit-text-fill-color:#1a1a2e !important;color:#1a1a2e !important;opacity:1 !important}
+input::-webkit-input-placeholder{color:#aaa !important;-webkit-text-fill-color:#aaa !important}
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{-webkit-text-fill-color:#1a1a2e !important;-webkit-box-shadow:0 0 0px 1000px #ffffff inset !important;transition:background-color 5000s ease-in-out 0s}
 </style>
 </head>
 <body><div id="root"></div>
@@ -289,7 +292,7 @@ function Jugador(){
         <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:12,border:'1px solid #e0e4ea'}}>
           <div style={{fontSize:13,color:'#888',marginBottom:8}}>👤 Tu nombre</div>
           <input value={name} onChange={e=>saveName(e.target.value)} placeholder="Ej: Lucas García"
-            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:'1px solid #e0e4ea',background:'#f4f5f7',color:'#1a1a2e',fontSize:15,outline:'none',WebkitTextFillColor:'#1a1a2e',caretColor:'#1a1a2e'}}/>
+            style={{width:'100%',padding:'10px 12px',borderRadius:8,border:'1px solid #e0e4ea',background:'#ffffff',color:'#1a1a2e',fontSize:15,outline:'none',WebkitTextFillColor:'#1a1a2e',opacity:1}}/>
         </div>
         <div style={{background:'#ffffff',borderRadius:10,padding:'10px 14px',marginBottom:12,border:'1px solid #e0e4ea',display:'flex',alignItems:'center',gap:12}}>
           <div style={{flex:1,background:'#f4f5f7',borderRadius:4,height:6}}>
