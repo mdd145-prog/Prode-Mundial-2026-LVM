@@ -24,62 +24,116 @@ const {useState,useEffect}=React
 
 // ── DATA ──────────────────────────────────────────────────
 const GRP={
-  A:['México','Sudáfrica','Corea del Sur','Chequia'],
-  B:['Canadá','Suiza','Qatar','Bosnia y Herz.'],
+  A:['México','Sudáfrica','Rep. de Corea','Rep. Checa'],
+  B:['Canadá','Bosnia Herz.','Catar','Suiza'],
   C:['Brasil','Marruecos','Haití','Escocia'],
-  D:['EE.UU.','Paraguay','Australia','Turquía'],
+  D:['Estados Unidos','Paraguay','Australia','Turquía'],
   E:['Alemania','Curazao','Costa de Marfil','Ecuador'],
-  F:['Países Bajos','Japón','Túnez','Suecia'],
+  F:['Países Bajos','Japón','Suecia','Túnez'],
   G:['Bélgica','Egipto','Irán','Nueva Zelanda'],
-  H:['España','Cabo Verde','Arabia Saudita','Uruguay'],
-  I:['Francia','Senegal','Noruega','Iraq'],
+  H:['España','Cabo Verde','Arabia Saudí','Uruguay'],
+  I:['Francia','Senegal','Noruega','Irak'],
   J:['Argentina','Argelia','Austria','Jordania'],
-  K:['Portugal','Colombia','Uzbekistán','R.D. Congo'],
+  K:['Portugal','Colombia','Uzbekistán','RD Congo'],
   L:['Inglaterra','Croacia','Ghana','Panamá'],
 }
-const GRP_START={A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,K:10,L:11}
-const BASE=new Date(2026,5,11)
-const addDays=(d,n)=>{const r=new Date(d.getTime()+n*86400000);return r.toISOString().slice(0,10)}
-const MATCHES=(()=>{
-  let n=1,m=[]
-  for(const [g,t] of Object.entries(GRP)){
-    const gs=GRP_START[g]
-    const dates=[addDays(BASE,gs),addDays(BASE,gs),addDays(BASE,gs+7),addDays(BASE,gs+7),addDays(BASE,gs+13),addDays(BASE,gs+13)]
-    for(const [idx,[i,j]] of [[0,[0,1]],[1,[2,3]],[2,[0,2]],[3,[1,3]],[4,[0,3]],[5,[1,2]]])
-      m.push({id:`m${n++}`,g,t1:t[i],t2:t[j],s1:null,s2:null,date:dates[idx]})
-  }
-  return m
-})()
 
-const getMatchDate=mid=>{
-  const idx=MATCHES.findIndex(m=>m.id===mid)
-  if(idx<0)return null
-  const g=Math.floor(idx/6),pos=idx%6,gk=Object.keys(GRP)[g]
-  return addDays(BASE,GRP_START[gk]+(pos<2?0:pos<4?7:13))
-}
+// Fixture oficial FIFA - horarios en hora Argentina (ET+1h)
+const MATCHES=[
+  // Jueves 11 Jun
+  {id:'m1', g:'A',t1:'México',          t2:'Sudáfrica',       s1:null,s2:null,date:'2026-06-11',time:'16:00'},
+  {id:'m2', g:'A',t1:'Rep. de Corea',   t2:'Rep. Checa',      s1:null,s2:null,date:'2026-06-11',time:'23:00'},
+  // Viernes 12 Jun
+  {id:'m3', g:'B',t1:'Canadá',          t2:'Bosnia Herz.',    s1:null,s2:null,date:'2026-06-12',time:'16:00'},
+  {id:'m4', g:'D',t1:'Estados Unidos',  t2:'Paraguay',        s1:null,s2:null,date:'2026-06-12',time:'22:00'},
+  // Sábado 13 Jun
+  {id:'m5', g:'B',t1:'Catar',           t2:'Suiza',           s1:null,s2:null,date:'2026-06-13',time:'16:00'},
+  {id:'m6', g:'C',t1:'Brasil',          t2:'Marruecos',       s1:null,s2:null,date:'2026-06-13',time:'19:00'},
+  {id:'m7', g:'C',t1:'Haití',           t2:'Escocia',         s1:null,s2:null,date:'2026-06-13',time:'22:00'},
+  {id:'m8', g:'D',t1:'Australia',       t2:'Turquía',         s1:null,s2:null,date:'2026-06-14',time:'01:00'},
+  // Domingo 14 Jun
+  {id:'m9', g:'E',t1:'Alemania',        t2:'Curazao',         s1:null,s2:null,date:'2026-06-14',time:'14:00'},
+  {id:'m10',g:'F',t1:'Países Bajos',    t2:'Japón',           s1:null,s2:null,date:'2026-06-14',time:'17:00'},
+  {id:'m11',g:'E',t1:'Costa de Marfil', t2:'Ecuador',         s1:null,s2:null,date:'2026-06-14',time:'20:00'},
+  {id:'m12',g:'F',t1:'Suecia',          t2:'Túnez',           s1:null,s2:null,date:'2026-06-14',time:'23:00'},
+  // Lunes 15 Jun
+  {id:'m13',g:'H',t1:'España',          t2:'Cabo Verde',      s1:null,s2:null,date:'2026-06-15',time:'13:00'},
+  {id:'m14',g:'G',t1:'Bélgica',         t2:'Egipto',          s1:null,s2:null,date:'2026-06-15',time:'16:00'},
+  {id:'m15',g:'H',t1:'Arabia Saudí',    t2:'Uruguay',         s1:null,s2:null,date:'2026-06-15',time:'19:00'},
+  {id:'m16',g:'G',t1:'Irán',            t2:'Nueva Zelanda',   s1:null,s2:null,date:'2026-06-15',time:'22:00'},
+  // Martes 16 Jun
+  {id:'m17',g:'I',t1:'Francia',         t2:'Senegal',         s1:null,s2:null,date:'2026-06-16',time:'16:00'},
+  {id:'m18',g:'I',t1:'Irak',            t2:'Noruega',         s1:null,s2:null,date:'2026-06-16',time:'19:00'},
+  {id:'m19',g:'J',t1:'Argentina',       t2:'Argelia',         s1:null,s2:null,date:'2026-06-16',time:'22:00'},
+  {id:'m20',g:'J',t1:'Austria',         t2:'Jordania',        s1:null,s2:null,date:'2026-06-17',time:'01:00'},
+  // Miércoles 17 Jun
+  {id:'m21',g:'K',t1:'Portugal',        t2:'RD Congo',        s1:null,s2:null,date:'2026-06-17',time:'14:00'},
+  {id:'m22',g:'L',t1:'Inglaterra',      t2:'Croacia',         s1:null,s2:null,date:'2026-06-17',time:'17:00'},
+  {id:'m23',g:'L',t1:'Ghana',           t2:'Panamá',          s1:null,s2:null,date:'2026-06-17',time:'20:00'},
+  {id:'m24',g:'K',t1:'Uzbekistán',      t2:'Colombia',        s1:null,s2:null,date:'2026-06-17',time:'23:00'},
+  // Jueves 18 Jun
+  {id:'m25',g:'A',t1:'Rep. Checa',      t2:'Sudáfrica',       s1:null,s2:null,date:'2026-06-18',time:'13:00'},
+  {id:'m26',g:'B',t1:'Suiza',           t2:'Bosnia Herz.',    s1:null,s2:null,date:'2026-06-18',time:'16:00'},
+  {id:'m27',g:'B',t1:'Canadá',          t2:'Catar',           s1:null,s2:null,date:'2026-06-18',time:'19:00'},
+  {id:'m28',g:'A',t1:'México',          t2:'Rep. de Corea',   s1:null,s2:null,date:'2026-06-18',time:'22:00'},
+  // Viernes 19 Jun
+  {id:'m29',g:'D',t1:'Estados Unidos',  t2:'Australia',       s1:null,s2:null,date:'2026-06-19',time:'16:00'},
+  {id:'m30',g:'C',t1:'Escocia',         t2:'Marruecos',       s1:null,s2:null,date:'2026-06-19',time:'19:00'},
+  {id:'m31',g:'C',t1:'Brasil',          t2:'Haití',           s1:null,s2:null,date:'2026-06-19',time:'22:00'},
+  {id:'m32',g:'D',t1:'Turquía',         t2:'Paraguay',        s1:null,s2:null,date:'2026-06-20',time:'01:00'},
+  // Sábado 20 Jun
+  {id:'m33',g:'F',t1:'Países Bajos',    t2:'Suecia',          s1:null,s2:null,date:'2026-06-20',time:'14:00'},
+  {id:'m34',g:'E',t1:'Alemania',        t2:'Costa de Marfil', s1:null,s2:null,date:'2026-06-20',time:'17:00'},
+  {id:'m35',g:'E',t1:'Ecuador',         t2:'Curazao',         s1:null,s2:null,date:'2026-06-20',time:'23:00'},
+  {id:'m36',g:'F',t1:'Túnez',           t2:'Japón',           s1:null,s2:null,date:'2026-06-21',time:'01:00'},
+  // Domingo 21 Jun
+  {id:'m37',g:'H',t1:'España',          t2:'Arabia Saudí',    s1:null,s2:null,date:'2026-06-21',time:'13:00'},
+  {id:'m38',g:'G',t1:'Bélgica',         t2:'Irán',            s1:null,s2:null,date:'2026-06-21',time:'16:00'},
+  {id:'m39',g:'H',t1:'Uruguay',         t2:'Cabo Verde',      s1:null,s2:null,date:'2026-06-21',time:'19:00'},
+  {id:'m40',g:'G',t1:'Nueva Zelanda',   t2:'Egipto',          s1:null,s2:null,date:'2026-06-21',time:'22:00'},
+  // Lunes 22 Jun
+  {id:'m41',g:'J',t1:'Argentina',       t2:'Austria',         s1:null,s2:null,date:'2026-06-22',time:'14:00'},
+  {id:'m42',g:'I',t1:'Francia',         t2:'Irak',            s1:null,s2:null,date:'2026-06-22',time:'18:00'},
+  {id:'m43',g:'I',t1:'Noruega',         t2:'Senegal',         s1:null,s2:null,date:'2026-06-22',time:'21:00'},
+  {id:'m44',g:'J',t1:'Jordania',        t2:'Argelia',         s1:null,s2:null,date:'2026-06-23',time:'00:00'},
+  // Martes 23 Jun
+  {id:'m45',g:'K',t1:'Portugal',        t2:'Uzbekistán',      s1:null,s2:null,date:'2026-06-23',time:'14:00'},
+  {id:'m46',g:'L',t1:'Inglaterra',      t2:'Ghana',           s1:null,s2:null,date:'2026-06-23',time:'17:00'},
+  {id:'m47',g:'L',t1:'Panamá',          t2:'Croacia',         s1:null,s2:null,date:'2026-06-23',time:'20:00'},
+  {id:'m48',g:'K',t1:'Colombia',        t2:'RD Congo',        s1:null,s2:null,date:'2026-06-23',time:'23:00'},
+  // Miércoles 24 Jun
+  {id:'m49',g:'B',t1:'Suiza',           t2:'Canadá',          s1:null,s2:null,date:'2026-06-24',time:'16:00'},
+  {id:'m50',g:'B',t1:'Bosnia Herz.',    t2:'Catar',           s1:null,s2:null,date:'2026-06-24',time:'16:00'},
+  {id:'m51',g:'C',t1:'Escocia',         t2:'Brasil',          s1:null,s2:null,date:'2026-06-24',time:'19:00'},
+  {id:'m52',g:'C',t1:'Marruecos',       t2:'Haití',           s1:null,s2:null,date:'2026-06-24',time:'19:00'},
+  {id:'m53',g:'A',t1:'Rep. Checa',      t2:'México',          s1:null,s2:null,date:'2026-06-24',time:'22:00'},
+  {id:'m54',g:'A',t1:'Sudáfrica',       t2:'Rep. de Corea',   s1:null,s2:null,date:'2026-06-24',time:'22:00'},
+  // Jueves 25 Jun
+  {id:'m55',g:'E',t1:'Curazao',         t2:'Costa de Marfil', s1:null,s2:null,date:'2026-06-25',time:'17:00'},
+  {id:'m56',g:'E',t1:'Ecuador',         t2:'Alemania',        s1:null,s2:null,date:'2026-06-25',time:'17:00'},
+  {id:'m57',g:'F',t1:'Japón',           t2:'Suecia',          s1:null,s2:null,date:'2026-06-25',time:'20:00'},
+  {id:'m58',g:'F',t1:'Túnez',           t2:'Países Bajos',    s1:null,s2:null,date:'2026-06-25',time:'20:00'},
+  {id:'m59',g:'D',t1:'Turquía',         t2:'Estados Unidos',  s1:null,s2:null,date:'2026-06-25',time:'23:00'},
+  {id:'m60',g:'D',t1:'Paraguay',        t2:'Australia',       s1:null,s2:null,date:'2026-06-25',time:'23:00'},
+  // Viernes 26 Jun
+  {id:'m61',g:'I',t1:'Noruega',         t2:'Francia',         s1:null,s2:null,date:'2026-06-26',time:'16:00'},
+  {id:'m62',g:'I',t1:'Senegal',         t2:'Irak',            s1:null,s2:null,date:'2026-06-26',time:'16:00'},
+  {id:'m63',g:'H',t1:'Cabo Verde',      t2:'Arabia Saudí',    s1:null,s2:null,date:'2026-06-26',time:'21:00'},
+  {id:'m64',g:'H',t1:'Uruguay',         t2:'España',          s1:null,s2:null,date:'2026-06-26',time:'21:00'},
+  {id:'m65',g:'G',t1:'Egipto',          t2:'Irán',            s1:null,s2:null,date:'2026-06-27',time:'00:00'},
+  {id:'m66',g:'G',t1:'Nueva Zelanda',   t2:'Bélgica',         s1:null,s2:null,date:'2026-06-27',time:'00:00'},
+  // Sábado 27 Jun
+  {id:'m67',g:'L',t1:'Panamá',          t2:'Inglaterra',      s1:null,s2:null,date:'2026-06-27',time:'18:00'},
+  {id:'m68',g:'L',t1:'Croacia',         t2:'Ghana',           s1:null,s2:null,date:'2026-06-27',time:'18:00'},
+  {id:'m69',g:'K',t1:'Colombia',        t2:'Portugal',        s1:null,s2:null,date:'2026-06-27',time:'20:30'},
+  {id:'m70',g:'K',t1:'RD Congo',        t2:'Uzbekistán',      s1:null,s2:null,date:'2026-06-27',time:'20:30'},
+  {id:'m71',g:'J',t1:'Argelia',         t2:'Austria',         s1:null,s2:null,date:'2026-06-27',time:'23:00'},
+  {id:'m72',g:'J',t1:'Jordania',        t2:'Argentina',       s1:null,s2:null,date:'2026-06-27',time:'23:00'},
+]
 
-// Horarios Argentina por grupo y posición dentro del grupo (índice 0-5)
-// Pares: [0,1],[2,3] = J1 | [0,2],[1,3] = J2 | [0,3],[1,2] = J3
-const TIMES={
-  A:['16:00','23:00','22:00','13:00','22:00','22:00'],
-  B:['16:00','22:00','19:00','16:00','22:00','22:00'],
-  C:['19:00','22:00','22:00','19:00','22:00','22:00'],
-  D:['22:00','01:00','16:00','22:00','22:00','22:00'],
-  E:['17:00','01:00','17:00','23:00','22:00','22:00'],
-  F:['14:00','01:00','14:00','21:00','22:00','22:00'],
-  G:['16:00','22:00','19:00','22:00','22:00','22:00'],
-  H:['13:00','19:00','22:00','16:00','22:00','22:00'],
-  I:['16:00','19:00','19:00','16:00','22:00','22:00'],
-  J:['22:00','01:00','14:00','01:00','23:00','23:00'],
-  K:['14:00','23:00','14:00','23:00','20:30','20:30'],
-  L:['17:00','20:00','18:00','18:00','20:30','20:30'],
-}
-const getMatchTime=mid=>{
-  const idx=MATCHES.findIndex(m=>m.id===mid)
-  if(idx<0)return''
-  const g=Math.floor(idx/6),pos=idx%6,gk=Object.keys(GRP)[g]
-  return TIMES[gk]?.[pos]||''
-}
+const getMatchDate=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.date:null}
+const getMatchTime=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.time:null}
+
 const tend=(a,b)=>a>b?1:a<b?-1:0
 const calcPts=(pred,match)=>{
   if(match.s1===null)return null
@@ -340,8 +394,16 @@ function Admin(){
 
   const [tab,setTab]=useState('tabla')
   const [pp,setPP]=useState(()=>LS.get('wc26p',[]))
-  const [mm,setMM]=useState(()=>LS.get('wc26m',MATCHES))
-  const [rr,setRR]=useState(()=>LS.get('wc26r',{}))
+  const [mm,setMM]=useState(()=>{
+    const stored=LS.get('wc26m',null)
+    if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id) return MATCHES
+    return stored.map((s,i)=>({...MATCHES[i],s1:s.s1,s2:s.s2}))
+  })
+  const [rr,setRR]=useState(()=>{
+    const stored=LS.get('wc26m',null)
+    if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id) return {}
+    return LS.get('wc26r',{})
+  })
   const [newN,setNewN]=useState('')
   const [selP,setSelP]=useState(null)
   const [pGrp,setPGrp]=useState('ALL')
@@ -364,7 +426,7 @@ function Admin(){
   const svAll=(p,m,r)=>{setPP(p);setMM(m);setRR(r);LS.set('wc26p',p);LS.set('wc26m',m);LS.set('wc26r',r)}
   const board=buildBoard(pp,mm,rr)
   const simBoard=simResult||board.map(p=>({...p,canWin:true}))
-  const dayMatches=dayFilter?mm.filter(m=>getMatchDate(m.id)===dayFilter):mm.filter(m=>m.s1!==null).slice(-4)
+  const dayMatches=(dayFilter?mm.filter(m=>getMatchDate(m.id)===dayFilter):[...mm].filter(m=>m.s1!==null).sort((a,b)=>a.date?.localeCompare(b.date)||0).slice(-4)).sort((a,b)=>(a.time||'').localeCompare(b.time||'')||0)
   const dayLabel=dayFilter?fmtDate(dayFilter):'Últimos resultados'
 
   const doImport=()=>{
@@ -786,7 +848,7 @@ function Admin(){
               {grps.map(g=>{const done=mm.filter(m=>m.g===g&&m.s1!==null).length;return<button key={g} onClick={()=>setAGrp(g)} style={pill(aGrp===g)}>G{g} {done}/6</button>})}
             </div>
           </div>
-          {mm.filter(m=>m.g===aGrp).map((m,idx)=>{
+          {[...mm].filter(m=>m.g===aGrp).sort((a,b)=>a.date?.localeCompare(b.date)||0).map((m,idx)=>{
             const mDate=getMatchDate(m.id)
             const jornada=idx<2?1:idx<4?2:3
             return(
