@@ -1,496 +1,485 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Prode Mundial 2026</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-<style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#f0f2f5;font-family:system-ui,sans-serif}
-input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
-input[type=number]{-moz-appearance:textfield}
-::-webkit-scrollbar{height:4px;width:4px}::-webkit-scrollbar-track{background:#e0e4ea}::-webkit-scrollbar-thumb{background:#f0c030;border-radius:2px}
-input{-webkit-text-fill-color:#1a1a2e !important;color:#1a1a2e !important;opacity:1 !important}
-input::-webkit-input-placeholder{color:#aaa !important;-webkit-text-fill-color:#aaa !important}
-input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{-webkit-text-fill-color:#1a1a2e !important;-webkit-box-shadow:0 0 0px 1000px #ffffff inset !important;transition:background-color 5000s ease-in-out 0s}
-</style>
-</head>
-<body><div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useRef}=React
+require('dotenv').config()
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys')
+const { Boom } = require('@hapi/boom')
+const QRCode = require('qrcode')
+const pino = require('pino')
+const express = require('express')
+const cron = require('node-cron')
+const { createClient } = require('@supabase/supabase-js')
+const axios = require('axios')
+const { generarTablaImagen } = require('./tablaImagen')
 
-const SUPA_URL='https://pgapjiunfbltefklhcwm.supabase.co'
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYXBqaXVuZmJsdGVma2xoY3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MDI2NjMsImV4cCI6MjA5NDQ3ODY2M30.CItmL-U--falj_ek-yVe_76c9ZSaWfJOUNpvIPRdAIA'
-const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY)
+const app = express()
+app.use(express.json())
 
-const GRP={A:['México','Sudáfrica','Rep. de Corea','Rep. Checa'],B:['Canadá','Bosnia Herz.','Catar','Suiza'],C:['Brasil','Marruecos','Haití','Escocia'],D:['Estados Unidos','Paraguay','Australia','Turquía'],E:['Alemania','Curazao','Costa de Marfil','Ecuador'],F:['Países Bajos','Japón','Suecia','Túnez'],G:['Bélgica','Egipto','Irán','Nueva Zelanda'],H:['España','Cabo Verde','Arabia Saudí','Uruguay'],I:['Francia','Senegal','Noruega','Irak'],J:['Argentina','Argelia','Austria','Jordania'],K:['Portugal','Colombia','Uzbekistán','RD Congo'],L:['Inglaterra','Croacia','Ghana','Panamá']}
+// ── Clientes ──────────────────────────────────────────────
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 
-const MATCHES=[
-  {id:'m1',g:'A',t1:'México',t2:'Sudáfrica',s1:null,s2:null,date:'2026-06-11',time:'16:00'},
-  {id:'m2',g:'A',t1:'Rep. de Corea',t2:'Rep. Checa',s1:null,s2:null,date:'2026-06-11',time:'23:00'},
-  {id:'m3',g:'B',t1:'Canadá',t2:'Bosnia Herz.',s1:null,s2:null,date:'2026-06-12',time:'16:00'},
-  {id:'m4',g:'D',t1:'Estados Unidos',t2:'Paraguay',s1:null,s2:null,date:'2026-06-12',time:'22:00'},
-  {id:'m5',g:'B',t1:'Catar',t2:'Suiza',s1:null,s2:null,date:'2026-06-13',time:'16:00'},
-  {id:'m6',g:'C',t1:'Brasil',t2:'Marruecos',s1:null,s2:null,date:'2026-06-13',time:'19:00'},
-  {id:'m7',g:'C',t1:'Haití',t2:'Escocia',s1:null,s2:null,date:'2026-06-13',time:'22:00'},
-  {id:'m8',g:'D',t1:'Australia',t2:'Turquía',s1:null,s2:null,date:'2026-06-14',time:'01:00'},
-  {id:'m9',g:'E',t1:'Alemania',t2:'Curazao',s1:null,s2:null,date:'2026-06-14',time:'14:00'},
-  {id:'m10',g:'F',t1:'Países Bajos',t2:'Japón',s1:null,s2:null,date:'2026-06-14',time:'17:00'},
-  {id:'m11',g:'E',t1:'Costa de Marfil',t2:'Ecuador',s1:null,s2:null,date:'2026-06-14',time:'20:00'},
-  {id:'m12',g:'F',t1:'Suecia',t2:'Túnez',s1:null,s2:null,date:'2026-06-14',time:'23:00'},
-  {id:'m13',g:'H',t1:'España',t2:'Cabo Verde',s1:null,s2:null,date:'2026-06-15',time:'13:00'},
-  {id:'m14',g:'G',t1:'Bélgica',t2:'Egipto',s1:null,s2:null,date:'2026-06-15',time:'16:00'},
-  {id:'m15',g:'H',t1:'Arabia Saudí',t2:'Uruguay',s1:null,s2:null,date:'2026-06-15',time:'19:00'},
-  {id:'m16',g:'G',t1:'Irán',t2:'Nueva Zelanda',s1:null,s2:null,date:'2026-06-15',time:'22:00'},
-  {id:'m17',g:'I',t1:'Francia',t2:'Senegal',s1:null,s2:null,date:'2026-06-16',time:'16:00'},
-  {id:'m18',g:'I',t1:'Irak',t2:'Noruega',s1:null,s2:null,date:'2026-06-16',time:'19:00'},
-  {id:'m19',g:'J',t1:'Argentina',t2:'Argelia',s1:null,s2:null,date:'2026-06-16',time:'22:00'},
-  {id:'m20',g:'J',t1:'Austria',t2:'Jordania',s1:null,s2:null,date:'2026-06-17',time:'01:00'},
-  {id:'m21',g:'K',t1:'Portugal',t2:'RD Congo',s1:null,s2:null,date:'2026-06-17',time:'14:00'},
-  {id:'m22',g:'L',t1:'Inglaterra',t2:'Croacia',s1:null,s2:null,date:'2026-06-17',time:'17:00'},
-  {id:'m23',g:'L',t1:'Ghana',t2:'Panamá',s1:null,s2:null,date:'2026-06-17',time:'20:00'},
-  {id:'m24',g:'K',t1:'Uzbekistán',t2:'Colombia',s1:null,s2:null,date:'2026-06-17',time:'23:00'},
-  {id:'m25',g:'A',t1:'Rep. Checa',t2:'Sudáfrica',s1:null,s2:null,date:'2026-06-18',time:'13:00'},
-  {id:'m26',g:'B',t1:'Suiza',t2:'Bosnia Herz.',s1:null,s2:null,date:'2026-06-18',time:'16:00'},
-  {id:'m27',g:'B',t1:'Canadá',t2:'Catar',s1:null,s2:null,date:'2026-06-18',time:'19:00'},
-  {id:'m28',g:'A',t1:'México',t2:'Rep. de Corea',s1:null,s2:null,date:'2026-06-18',time:'22:00'},
-  {id:'m29',g:'D',t1:'Estados Unidos',t2:'Australia',s1:null,s2:null,date:'2026-06-19',time:'16:00'},
-  {id:'m30',g:'C',t1:'Escocia',t2:'Marruecos',s1:null,s2:null,date:'2026-06-19',time:'19:00'},
-  {id:'m31',g:'C',t1:'Brasil',t2:'Haití',s1:null,s2:null,date:'2026-06-19',time:'22:00'},
-  {id:'m32',g:'D',t1:'Turquía',t2:'Paraguay',s1:null,s2:null,date:'2026-06-20',time:'01:00'},
-  {id:'m33',g:'F',t1:'Países Bajos',t2:'Suecia',s1:null,s2:null,date:'2026-06-20',time:'14:00'},
-  {id:'m34',g:'E',t1:'Alemania',t2:'Costa de Marfil',s1:null,s2:null,date:'2026-06-20',time:'17:00'},
-  {id:'m35',g:'E',t1:'Ecuador',t2:'Curazao',s1:null,s2:null,date:'2026-06-20',time:'23:00'},
-  {id:'m36',g:'F',t1:'Túnez',t2:'Japón',s1:null,s2:null,date:'2026-06-21',time:'01:00'},
-  {id:'m37',g:'H',t1:'España',t2:'Arabia Saudí',s1:null,s2:null,date:'2026-06-21',time:'13:00'},
-  {id:'m38',g:'G',t1:'Bélgica',t2:'Irán',s1:null,s2:null,date:'2026-06-21',time:'16:00'},
-  {id:'m39',g:'H',t1:'Uruguay',t2:'Cabo Verde',s1:null,s2:null,date:'2026-06-21',time:'19:00'},
-  {id:'m40',g:'G',t1:'Nueva Zelanda',t2:'Egipto',s1:null,s2:null,date:'2026-06-21',time:'22:00'},
-  {id:'m41',g:'J',t1:'Argentina',t2:'Austria',s1:null,s2:null,date:'2026-06-22',time:'14:00'},
-  {id:'m42',g:'I',t1:'Francia',t2:'Irak',s1:null,s2:null,date:'2026-06-22',time:'18:00'},
-  {id:'m43',g:'I',t1:'Noruega',t2:'Senegal',s1:null,s2:null,date:'2026-06-22',time:'21:00'},
-  {id:'m44',g:'J',t1:'Jordania',t2:'Argelia',s1:null,s2:null,date:'2026-06-23',time:'00:00'},
-  {id:'m45',g:'K',t1:'Portugal',t2:'Uzbekistán',s1:null,s2:null,date:'2026-06-23',time:'14:00'},
-  {id:'m46',g:'L',t1:'Inglaterra',t2:'Ghana',s1:null,s2:null,date:'2026-06-23',time:'17:00'},
-  {id:'m47',g:'L',t1:'Panamá',t2:'Croacia',s1:null,s2:null,date:'2026-06-23',time:'20:00'},
-  {id:'m48',g:'K',t1:'Colombia',t2:'RD Congo',s1:null,s2:null,date:'2026-06-23',time:'23:00'},
-  {id:'m49',g:'B',t1:'Suiza',t2:'Canadá',s1:null,s2:null,date:'2026-06-24',time:'16:00'},
-  {id:'m50',g:'B',t1:'Bosnia Herz.',t2:'Catar',s1:null,s2:null,date:'2026-06-24',time:'16:00'},
-  {id:'m51',g:'C',t1:'Escocia',t2:'Brasil',s1:null,s2:null,date:'2026-06-24',time:'19:00'},
-  {id:'m52',g:'C',t1:'Marruecos',t2:'Haití',s1:null,s2:null,date:'2026-06-24',time:'19:00'},
-  {id:'m53',g:'A',t1:'Rep. Checa',t2:'México',s1:null,s2:null,date:'2026-06-24',time:'22:00'},
-  {id:'m54',g:'A',t1:'Sudáfrica',t2:'Rep. de Corea',s1:null,s2:null,date:'2026-06-24',time:'22:00'},
-  {id:'m55',g:'E',t1:'Curazao',t2:'Costa de Marfil',s1:null,s2:null,date:'2026-06-25',time:'17:00'},
-  {id:'m56',g:'E',t1:'Ecuador',t2:'Alemania',s1:null,s2:null,date:'2026-06-25',time:'17:00'},
-  {id:'m57',g:'F',t1:'Japón',t2:'Suecia',s1:null,s2:null,date:'2026-06-25',time:'20:00'},
-  {id:'m58',g:'F',t1:'Túnez',t2:'Países Bajos',s1:null,s2:null,date:'2026-06-25',time:'20:00'},
-  {id:'m59',g:'D',t1:'Turquía',t2:'Estados Unidos',s1:null,s2:null,date:'2026-06-25',time:'23:00'},
-  {id:'m60',g:'D',t1:'Paraguay',t2:'Australia',s1:null,s2:null,date:'2026-06-25',time:'23:00'},
-  {id:'m61',g:'I',t1:'Noruega',t2:'Francia',s1:null,s2:null,date:'2026-06-26',time:'16:00'},
-  {id:'m62',g:'I',t1:'Senegal',t2:'Irak',s1:null,s2:null,date:'2026-06-26',time:'16:00'},
-  {id:'m63',g:'H',t1:'Cabo Verde',t2:'Arabia Saudí',s1:null,s2:null,date:'2026-06-26',time:'21:00'},
-  {id:'m64',g:'H',t1:'Uruguay',t2:'España',s1:null,s2:null,date:'2026-06-26',time:'21:00'},
-  {id:'m65',g:'G',t1:'Egipto',t2:'Irán',s1:null,s2:null,date:'2026-06-27',time:'00:00'},
-  {id:'m66',g:'G',t1:'Nueva Zelanda',t2:'Bélgica',s1:null,s2:null,date:'2026-06-27',time:'00:00'},
-  {id:'m67',g:'L',t1:'Panamá',t2:'Inglaterra',s1:null,s2:null,date:'2026-06-27',time:'18:00'},
-  {id:'m68',g:'L',t1:'Croacia',t2:'Ghana',s1:null,s2:null,date:'2026-06-27',time:'18:00'},
-  {id:'m69',g:'K',t1:'Colombia',t2:'Portugal',s1:null,s2:null,date:'2026-06-27',time:'20:30'},
-  {id:'m70',g:'K',t1:'RD Congo',t2:'Uzbekistán',s1:null,s2:null,date:'2026-06-27',time:'20:30'},
-  {id:'m71',g:'J',t1:'Argelia',t2:'Austria',s1:null,s2:null,date:'2026-06-27',time:'23:00'},
-  {id:'m72',g:'J',t1:'Jordania',t2:'Argentina',s1:null,s2:null,date:'2026-06-27',time:'23:00'},
-]
+// ── Constantes ────────────────────────────────────────────
+const ADMIN_NUMBER = '5491157671081'
+const ADMIN_JID    = process.env.ADMIN_JID || `${ADMIN_NUMBER}@s.whatsapp.net`  // Baileys usa @s.whatsapp.net
 
-const getMatchDate=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.date:null}
-const getMatchTime=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.time:null}
-const tend=(a,b)=>a>b?1:a<b?-1:0
-const calcPts=(pred,match)=>{
-  if(match.s1===null)return null
-  if(!pred||pred.s1===null||pred.s2===null)return 0
-  if(pred.s1===match.s1&&pred.s2===match.s2)return 3
-  if(tend(pred.s1,pred.s2)===tend(match.s1,match.s2))return 1
-  return 0
+const TEAM_MAP = {
+  'Mexico': 'México', 'South Africa': 'Sudáfrica',
+  'Korea Republic': 'Rep. de Corea', 'South Korea': 'Rep. de Corea',
+  'Czechia': 'Rep. Checa', 'Czech Republic': 'Rep. Checa',
+  'Canada': 'Canadá', 'Bosnia and Herzegovina': 'Bosnia Herz.',
+  'Bosnia & Herzegovina': 'Bosnia Herz.', 'Qatar': 'Catar',
+  'Switzerland': 'Suiza', 'Brazil': 'Brasil', 'Morocco': 'Marruecos',
+  'Haiti': 'Haití', 'Scotland': 'Escocia',
+  'United States': 'Estados Unidos', 'USA': 'Estados Unidos',
+  'Paraguay': 'Paraguay', 'Australia': 'Australia', 'Turkey': 'Turquía',
+  'Germany': 'Alemania', 'Curaçao': 'Curazao', 'Curacao': 'Curazao',
+  "Côte d'Ivoire": 'Costa de Marfil', 'Ivory Coast': 'Costa de Marfil',
+  'Ecuador': 'Ecuador', 'Netherlands': 'Países Bajos', 'Japan': 'Japón',
+  'Sweden': 'Suecia', 'Tunisia': 'Túnez', 'Belgium': 'Bélgica',
+  'Egypt': 'Egipto', 'Iran': 'Irán', 'New Zealand': 'Nueva Zelanda',
+  'Spain': 'España', 'Cape Verde': 'Cabo Verde', 'Saudi Arabia': 'Arabia Saudí',
+  'Uruguay': 'Uruguay', 'France': 'Francia', 'Senegal': 'Senegal',
+  'Norway': 'Noruega', 'Iraq': 'Irak', 'Argentina': 'Argentina',
+  'Algeria': 'Argelia', 'Austria': 'Austria', 'Jordan': 'Jordania',
+  'Portugal': 'Portugal', 'Colombia': 'Colombia', 'Uzbekistan': 'Uzbekistán',
+  'DR Congo': 'RD Congo', 'Congo DR': 'RD Congo',
+  'Democratic Republic of Congo': 'RD Congo',
+  'England': 'Inglaterra', 'Croatia': 'Croacia',
+  'Ghana': 'Ghana', 'Panama': 'Panamá',
 }
-const toNum=v=>v===''?null:Math.max(0,Math.min(20,parseInt(v)||0))
-const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}}
-const fmtDate=iso=>new Date(iso+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})
+const mapTeam = n => TEAM_MAP[n] || n
 
-function buildBoard(pp,mm,rr){
-  return pp.map(p=>{
-    let tot=0,ex=0,lv=0,fail=0,jug=0
-    for(const m of mm){
-      const p2=calcPts((rr[p.id]||{})[m.id],m)
-      if(p2===null)continue
-      jug++;tot+=p2
-      if(p2===3)ex++;else if(p2===1)lv++;else fail++
+// ── Estado global ─────────────────────────────────────────
+let botSock  = null
+let ultimoQR = null
+
+// ── Lógica de puntos ──────────────────────────────────────
+function calcPts(pred, partido) {
+  if (partido.goles1 === null || partido.goles2 === null) return null
+  if (!pred || pred.goles1 === null || pred.goles2 === null) return 0
+  if (pred.goles1 === partido.goles1 && pred.goles2 === partido.goles2) return 3
+  const tend = (a, b) => a > b ? 1 : a < b ? -1 : 0
+  return tend(pred.goles1, pred.goles2) === tend(partido.goles1, partido.goles2) ? 1 : 0
+}
+
+async function buildBoard() {
+  const { data: jugadores }   = await supabase.from('jugadores').select('*').order('orden')
+  const { data: partidos }    = await supabase.from('partidos').select('*')
+  const { data: pronosticos } = await supabase.from('pronosticos').select('*')
+  if (!jugadores) return []
+  return jugadores.map(j => {
+    let tot = 0, ex = 0, lv = 0, fail = 0, jug = 0
+    const preds = pronosticos?.filter(p => p.jugador_id === j.id) || []
+    for (const partido of (partidos || [])) {
+      if (partido.goles1 === null) continue
+      const pred = preds.find(p => p.partido_id === partido.id)
+      const pts  = calcPts(pred, partido)
+      if (pts === null) continue
+      jug++; tot += pts
+      if (pts === 3) ex++; else if (pts === 1) lv++; else fail++
     }
-    const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length
-    const pct=jug>0?((ex/jug)*100).toFixed(2)+'%':'-'
-    return{...p,tot,ex,lv,fail,jug,done,pct}
-  }).sort((a,b)=>b.tot-a.tot)
-}
-function simulateChances(pp,mm,rr){
-  const rem=mm.filter(m=>m.s1===null).length*3
-  const board=buildBoard(pp,mm,rr)
-  if(!board.length)return[]
-  const top=board[0].tot
-  return board.map(p=>({...p,maxPossible:p.tot+rem,canWin:p.tot+rem>=top}))
+    const pct = jug > 0 ? ((ex / jug) * 100).toFixed(0) + '%' : '-'
+    return { id: j.id, nombre: j.nombre, tot, ex, lv, fail, jug, pct }
+  }).sort((a, b) => b.tot - a.tot)
 }
 
-function exportPDF(board,oficial){
-  const title=oficial?'TABLA OFICIAL':'TABLA NO OFICIAL'
-  const hdrColor=oficial?'#6a0dad':'#1a6b8a'
-  const statsColor=oficial?'#27ae60':'#e67e22'
-  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-  const rows=board.map((p,i)=>{
-    const bg=i%2===0?'#d9d9d9':'#ffffff'
-    const medal=i===0?'🏆 ':i===1?'🥈 ':i===2?'🥉 ':''
-    return `<tr style="background:${bg}"><td style="padding:5px 8px;text-align:center;font-weight:700;font-size:12px">${i+1}</td><td style="padding:5px 10px;font-weight:700;font-size:13px">${medal}${p.name}</td><td style="padding:5px 8px;text-align:center;font-weight:900;font-size:15px">${p.tot}</td><td style="padding:5px 8px;text-align:center;font-size:12px">${p.jug}</td><td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#1a6b2e">${p.ex}</td><td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#1a6b2e">${p.lv}</td><td style="padding:5px 8px;text-align:center;font-size:12px;font-weight:700;color:#1a6b2e">${p.fail}</td><td style="padding:5px 8px;text-align:center;font-size:11px;color:#444">${p.pct}</td></tr>`
-  }).join('')
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;background:white}.outer{border:2px solid #333;border-radius:4px;overflow:hidden;width:100%;max-width:560px;margin:20px auto}.title-row{display:flex;background:${hdrColor}}.title-left{flex:1;color:white;font-size:20px;font-weight:900;padding:13px 16px}.title-right{background:${statsColor};color:white;font-size:12px;font-weight:700;padding:13px 14px;display:flex;align-items:center}table{width:100%;border-collapse:collapse}th{padding:7px 8px;font-size:11px;font-weight:700}.ch{background:#1a1a2e;color:white;text-align:center}.chl{background:#1a1a2e;color:white;text-align:left;padding-left:12px}.cs{background:${statsColor};color:white;text-align:center}td{border-bottom:1px solid #ccc}.foot{text-align:center;padding:7px;font-size:10px;color:#888;border-top:1px solid #ddd}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="outer"><div class="title-row"><div class="title-left">${title}</div><div class="title-right">RESULTADOS</div></div><table><tr><th class="ch" style="width:40px">POS</th><th class="chl">JUGADOR</th><th class="ch" style="width:50px">PTS</th><th class="ch" style="width:46px">JUG</th><th class="cs" style="width:38px">3</th><th class="cs" style="width:38px">1</th><th class="cs" style="width:38px">0</th><th class="cs" style="width:60px">%</th></tr>${rows}</table><div class="foot">PRODE MUNDIAL 2026 · ${fecha}</div></div></body></html>`
-  const w=window.open('','_blank','width=620,height=800')
-  w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},600)
+async function tablaTexto() {
+  const board = await buildBoard()
+  const { data: partidos } = await supabase.from('partidos').select('*')
+  const jugados = partidos?.filter(p => p.goles1 !== null).length || 0
+  const total   = partidos?.length || 72
+  const fecha   = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+  const lines   = [`⚽ *PRODE MUNDIAL 2026*`, `📊 TABLA · ${fecha}`, `_${jugados}/${total} partidos jugados_`, ``]
+  board.forEach((p, i) => {
+    const pos = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`
+    lines.push(`${pos} *${p.nombre}* — ${p.tot}pts${p.ex > 0 ? ` ⚡${p.ex}` : ''}`)
+  })
+  lines.push(``, `_⚡Exacto=3pts · 📈Levante=1pt_`)
+  return lines.join('\n')
 }
 
-function exportAllPredictions(pp,mm,rr){
-  if(!pp.length){alert('No hay jugadores');return}
-  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-  const grpSections=Object.keys(GRP).map(g=>{
-    const gm=mm.filter(m=>m.g===g)
-    const pHeaders=pp.map(p=>`<th style="background:#1a1a2e;color:white;padding:2px;font-size:8px;writing-mode:vertical-lr;transform:rotate(180deg);min-width:26px;border:1px solid #555">${p.name.length>9?p.name.slice(0,9)+'…':p.name}</th>`).join('')
-    const rows=gm.map(m=>{const cells=pp.map(p=>{const pred=(rr[p.id]||{})[m.id];const txt=(pred&&pred.s1!==null&&pred.s2!==null)?`${pred.s1}-${pred.s2}`:'-';return `<td style="text-align:center;font-size:9px;padding:3px 1px;border:1px solid #ddd;font-weight:${txt!=='-'?700:400};color:${txt!=='-'?'#000':'#bbb'}">${txt}</td>`}).join('');return `<tr style="background:white"><td style="padding:3px 8px;font-size:9px;font-weight:700;border:1px solid #ddd;white-space:nowrap">${m.t1} vs ${m.t2}</td>${cells}</tr>`}).join('')
-    return `<div style="margin-bottom:14px;break-inside:avoid"><div style="background:#6a0dad;color:white;padding:5px 10px;font-size:11px;font-weight:900">GRUPO ${g}</div><table style="width:100%;border-collapse:collapse"><tr><th style="background:#1a1a2e;color:white;padding:5px 8px;text-align:left;font-size:9px;border:1px solid #555;min-width:140px">PARTIDO</th>${pHeaders}</tr>${rows}</table></div>`
-  }).join('')
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:white;padding:12px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px}}</style></head><body><div style="background:#6a0dad;color:white;text-align:center;padding:12px;border-radius:4px;margin-bottom:12px"><div style="font-size:18px;font-weight:900">⚽ PRODE MUNDIAL 2026</div><div style="font-size:10px;opacity:0.8;margin-top:3px">Pronósticos completos · Fase de Grupos · ${fecha}</div></div>${grpSections}<div style="text-align:center;margin-top:10px;font-size:9px;color:#888;border-top:1px solid #eee;padding-top:6px">Exacto = 3pts · Levante = 1pt · Fallado = 0pts</div></body></html>`
-  const w=window.open('','_blank','width=900,height=800')
-  w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},700)
-}
-
-function exportDayPDF(dayMatches,pp,rr,dayLabel){
-  if(!dayMatches.length){alert('No hay partidos para esta fecha');return}
-  const mHeaders=dayMatches.map(m=>`<th style="background:#1a1a2e;color:white;padding:5px 3px;font-size:9px;writing-mode:vertical-lr;transform:rotate(180deg);min-width:46px;border:1px solid #555">${m.t1}<br/>vs<br/>${m.t2}</th>`).join('')
-  const resRow=`<tr style="background:#f0e6ff"><td style="padding:4px 8px;font-weight:900;font-size:11px;color:#6a0dad;border:1px solid #ddd">RESULTADO REAL</td>${dayMatches.map(m=>`<td style="text-align:center;font-weight:900;font-size:13px;color:#6a0dad;padding:4px;border:1px solid #ddd">${m.s1!==null?`${m.s1}-${m.s2}`:''}</td>`).join('')}</tr>`
-  const pRows=pp.map((p,i)=>{const bg=i%2===0?'#f5f5f5':'#ffffff';const cells=dayMatches.map(m=>{const pred=(rr[p.id]||{})[m.id];const txt=(pred&&pred.s1!==null&&pred.s2!==null)?`${pred.s1}-${pred.s2}`:'-';const pts=calcPts(pred,m);const cellBg=pts===3?'#c6efce':pts===1?'#ffeb9c':pts===0&&m.s1!==null?'#ffc7ce':bg;return `<td style="text-align:center;font-size:11px;padding:4px;background:${cellBg};font-weight:${txt!=='-'?700:400};border:1px solid #ddd">${txt}</td>`}).join('');return `<tr style="background:${bg}"><td style="padding:4px 8px;font-weight:700;font-size:11px;border:1px solid #ddd">${i+1}. ${p.name}</td>${cells}</tr>`}).join('')
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;padding:14px;background:white}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div style="background:#6a0dad;color:white;text-align:center;padding:10px;font-size:17px;font-weight:900;border-radius:4px 4px 0 0">⚽ RESULTADOS</div><div style="font-size:28px;font-weight:900;color:#6a0dad;padding:8px 4px 6px">${dayLabel}</div><table style="width:100%;border-collapse:collapse"><tr><th style="background:#1a1a2e;color:white;padding:6px 8px;text-align:left;font-size:10px;border:1px solid #555;min-width:130px">JUGADOR</th>${mHeaders}</tr>${resRow}${pRows}</table><div style="text-align:center;margin-top:8px;font-size:9px;color:#666">🟢 Exacto +3 · 🟡 Levante +1 · 🔴 Fallado</div></body></html>`
-  const w=window.open('','_blank','width=700,height=700')
-  w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},600)
-}
-
-// ── JUGADOR ───────────────────────────────────────────────
-function Jugador(){
-  const LS2={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}}
-  const [name,setName]=useState(()=>LS2.get('jug_name',''))
-  const [preds,setPreds]=useState(()=>LS2.get('jug_preds',{}))
-  const [grp,setGrp]=useState('A')
-  const [step,setStep]=useState('form')
-  const [copied,setCopied]=useState(false)
-  const grps=Object.keys(GRP)
-  const saveName=n=>{setName(n);LS2.set('jug_name',n)}
-  const upd=(id,f,v)=>{const newP={...preds,[id]:{...(preds[id]||{}),[f]:v===''?'':Math.max(0,Math.min(20,parseInt(v)||0)).toString()}};setPreds(newP);LS2.set('jug_preds',newP)}
-  const filled=MATCHES.filter(m=>{const p=preds[m.id];return p&&p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!==''}).length
-  const grpFilled=g=>MATCHES.filter(m=>m.g===g).filter(m=>{const p=preds[m.id];return p&&p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!==''}).length
-  const genCode=()=>`PRODE26|${name.trim()}|${MATCHES.map(m=>{const p=preds[m.id];return(!p||p.s1===undefined||p.s1===''||p.s2===undefined||p.s2==='')?'?':`${p.s1}-${p.s2}`}).join(',')}`
-  const waUrl=()=>`https://wa.me/?text=${encodeURIComponent('⚽ *PRODE MUNDIAL 2026*\n👤 *'+name.trim()+'*\n\n📋 Mi código:\n\n'+genCode())}`
-  const pill=a=>({padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:12,fontWeight:600,whiteSpace:'nowrap',background:a?'#6a0dad':'#ebebeb',color:a?'white':'#555'})
-  const si={width:38,textAlign:'center',background:'#e8f0fe',border:'1px solid #c5cae9',borderRadius:8,color:'#1a1a2e',fontSize:17,fontWeight:900,padding:'5px 2px',outline:'none',WebkitTextFillColor:'#1a1a2e'}
-  if(step==='code')return(<div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:480,margin:'0 auto',padding:'16px 14px'}}><div style={{textAlign:'center',marginBottom:20}}><div style={{fontSize:44,marginBottom:8}}>✅</div><div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>¡Pronósticos listos!</div><div style={{fontSize:13,color:'#888',marginTop:4}}>{name} · {filled}/72 partidos</div></div><div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:14,border:'1px solid #e0e4ea'}}><div style={{fontSize:13,color:'#888',marginBottom:8}}>📋 Tu código:</div><div style={{background:'#f0f2f5',borderRadius:8,padding:'10px 12px',fontSize:11,color:'#3d5afe',wordBreak:'break-all',fontFamily:'monospace',lineHeight:1.5,maxHeight:120,overflowY:'auto'}}>{genCode()}</div><button onClick={()=>navigator.clipboard?.writeText(genCode()).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)})} style={{width:'100%',marginTop:10,padding:'10px',background:copied?'#27ae60':'#0f3460',border:'none',borderRadius:8,color:'#1a1a2e',fontWeight:700,fontSize:14,cursor:'pointer'}}>{copied?'✓ ¡Copiado!':'📋 Copiar código'}</button></div><a href={waUrl()} target="_blank" style={{display:'block',background:'#25D366',borderRadius:12,padding:'14px',textAlign:'center',color:'#1a1a2e',fontWeight:800,fontSize:16,textDecoration:'none',marginBottom:14}}>📲 Enviar por WhatsApp</a><button onClick={()=>setStep('form')} style={{width:'100%',padding:12,background:'transparent',border:'1px solid #e0e4ea',borderRadius:10,color:'#888',cursor:'pointer',fontSize:14,marginBottom:8}}>← Volver a editar</button><button onClick={()=>{LS2.set('jug_name','');LS2.set('jug_preds',{});setName('');setPreds({});setStep('form')}} style={{width:'100%',padding:12,background:'transparent',border:'1px solid #ffc7ce',borderRadius:10,color:'#c0392b',cursor:'pointer',fontSize:13}}>🗑 Borrar y empezar de nuevo</button></div>)
-  return(<div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:480,margin:'0 auto',paddingBottom:80}}><div style={{background:'linear-gradient(135deg,#6a0dad,#4a0090)',padding:'14px 16px 12px',textAlign:'center',position:'sticky',top:0,zIndex:50}}><div style={{fontSize:17,fontWeight:800,color:'#f0c030'}}>⚽ PRODE MUNDIAL 2026</div><div style={{fontSize:11,color:'#888',marginTop:2}}>Completá tus pronósticos y mandáselos al admin</div></div><div style={{padding:'12px 12px 0'}}><div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:12,border:'1px solid #e0e4ea'}}><div style={{fontSize:13,color:'#888',marginBottom:8}}>👤 Tu nombre</div><input value={name} onChange={e=>saveName(e.target.value)} placeholder="Ej: Lucas García" style={{width:'100%',padding:'10px 12px',borderRadius:8,border:'1px solid #e0e4ea',background:'#ffffff',color:'#1a1a2e',fontSize:15,outline:'none',WebkitTextFillColor:'#1a1a2e',opacity:1}}/></div><div style={{background:'#ffffff',borderRadius:10,padding:'10px 14px',marginBottom:12,border:'1px solid #e0e4ea',display:'flex',alignItems:'center',gap:12}}><div style={{flex:1,background:'#f4f5f7',borderRadius:4,height:6}}><div style={{background:filled===72?'#2ecc71':'#f0c030',width:`${(filled/72)*100}%`,height:'100%',borderRadius:4,transition:'width 0.3s'}}/></div><span style={{fontSize:13,color:filled===72?'#2ecc71':'#f0c030',fontWeight:700,whiteSpace:'nowrap'}}>{filled}/72</span></div><div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:8,marginBottom:10}}>{grps.map(g=><button key={g} onClick={()=>setGrp(g)} style={pill(grp===g)}>G{g}{grpFilled(g)===6?' ✓':''}</button>)}</div><div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:16}}>{MATCHES.filter(m=>m.g===grp).map(m=>{const p=preds[m.id]||{};const done=p.s1!==undefined&&p.s1!==''&&p.s2!==undefined&&p.s2!=='';return(<div key={m.id} style={{background:'#ffffff',border:`1px solid ${done?'#27ae60':'#2a2a3a'}`,borderRadius:10,padding:'10px 12px'}}><div style={{display:'flex',alignItems:'center',gap:8}}><span style={{flex:1,textAlign:'right',fontSize:13,color:'#222',fontWeight:500}}>{m.t1}</span><input type="number" value={p.s1??''} min="0" max="20" onChange={e=>upd(m.id,'s1',e.target.value)} style={si}/><span style={{color:'#aaa',fontWeight:700}}>-</span><input type="number" value={p.s2??''} min="0" max="20" onChange={e=>upd(m.id,'s2',e.target.value)} style={si}/><span style={{flex:1,fontSize:13,color:'#222',fontWeight:500}}>{m.t2}</span></div></div>)})}</div><div style={{display:'flex',gap:8,marginBottom:8}}>{grp>'A'&&<button onClick={()=>setGrp(String.fromCharCode(grp.charCodeAt(0)-1))} style={{flex:1,padding:10,background:'#ffffff',border:'1px solid #e0e4ea',borderRadius:10,color:'#888',cursor:'pointer',fontSize:14}}>← G{String.fromCharCode(grp.charCodeAt(0)-1)}</button>}{grp<'L'&&<button onClick={()=>setGrp(String.fromCharCode(grp.charCodeAt(0)+1))} style={{flex:1,padding:10,background:'#f4f5f7',border:'none',borderRadius:10,color:'#1a1a2e',cursor:'pointer',fontSize:14,fontWeight:700}}>G{String.fromCharCode(grp.charCodeAt(0)+1)} →</button>}</div></div><div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:480,background:'#ffffff',borderTop:'1px solid #dde3ec',padding:'10px 14px'}}><button onClick={()=>{if(!name.trim()){alert('Ingresá tu nombre primero');return};setStep('code')}} disabled={filled===0} style={{width:'100%',padding:'13px',background:name.trim()&&filled>0?'#25D366':'#ccc',border:'none',borderRadius:12,color:'white',fontWeight:800,fontSize:16,cursor:name.trim()&&filled>0?'pointer':'not-allowed'}}>{filled===72?'✅ Generar código (72/72)':`📲 Generar código (${filled}/72)`}</button></div></div>)
-}
-
-// ── ADMIN ─────────────────────────────────────────────────
-function Admin(){
-  const [tab,setTab]=useState('tabla')
-  const [pp,setPP]=useState(()=>LS.get('wc26p',[]))
-  const [mm,setMM]=useState(()=>{const stored=LS.get('wc26m',null);if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id)return MATCHES;return stored.map((s,i)=>({...MATCHES[i],s1:s.s1,s2:s.s2}))})
-  const [rr,setRR]=useState(()=>LS.get('wc26r',{}))
-  const [loading,setLoading]=useState(true)
-  const [syncMsg,setSyncMsg]=useState('Cargando...')
-  const [newN,setNewN]=useState('')
-  const [selP,setSelP]=useState(null)
-  const [pGrp,setPGrp]=useState('ALL')
-  const [aGrp,setAGrp]=useState('A')
-  const [toast,setToast]=useState(null)
-  const [importTxt,setImportTxt]=useState('')
-  const [importLog,setImportLog]=useState(null)
-  const [dayFilter,setDayFilter]=useState('')
-  const [simResult,setSimResult]=useState(null)
-  const [tablaMode,setTablaMode]=useState(null)
-  const [editingId,setEditingId]=useState(null)
-  const [editingName,setEditingName]=useState('')
-  const rrRef=useRef(rr)
-  const mmRef=useRef(mm)
-  const saveTimer=useRef({})
-  useEffect(()=>{rrRef.current=rr},[rr])
-  useEffect(()=>{mmRef.current=mm},[mm])
-  const grps=Object.keys(GRP)
-  const played=mm.filter(m=>m.s1!==null).length
-  const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
-
-  const svP=p=>{setPP(p);LS.set('wc26p',p)}
-  const svM=m=>{setMM(m);LS.set('wc26m',m);setSimResult(null)}
-  const svR=r=>{setRR(r);LS.set('wc26r',r)}
-  const svAll=(p,m,r)=>{setPP(p);setMM(m);setRR(r);LS.set('wc26p',p);LS.set('wc26m',m);LS.set('wc26r',r)}
-
-  const dbSavePlayers=ps=>sb.from('jugadores').upsert(ps.map((p,i)=>({id:p.id,nombre:p.name,orden:i}))).then(({error})=>{if(error)console.error('dbSavePlayers:',error)})
-  const dbDeletePlayer=id=>{sb.from('jugadores').delete().eq('id',id).then();sb.from('pronosticos').delete().eq('jugador_id',id).then()}
-  const dbSaveResult=async m=>{
-    if(m.s1!==null&&m.s2!==null){
-      const {error}=await sb.from('partidos').update({goles1:m.s1,goles2:m.s2}).eq('id',m.id)
-      if(error)console.error('dbSaveResult:',error)
-    }else{
-      const {error}=await sb.from('partidos').update({goles1:null,goles2:null}).eq('id',m.id)
-      if(error)console.error('dbClearResult:',error)
+async function tablaDiaTexto(fecha) {
+  const { data: partidos }    = await supabase.from('partidos').select('*').eq('fecha', fecha)
+  if (!partidos?.length) return `No hay partidos el ${fecha}`
+  const { data: jugadores }   = await supabase.from('jugadores').select('*').order('orden')
+  const { data: pronosticos } = await supabase.from('pronosticos').select('*')
+  const lines = [`📅 *PARTIDOS ${fecha}*`, ``]
+  for (const p of partidos) {
+    const res = p.goles1 !== null ? `${p.goles1}-${p.goles2}` : p.hora
+    lines.push(`*${p.equipo1} ${res} ${p.equipo2}* (G${p.grupo})`)
+    for (const j of (jugadores || [])) {
+      const pred    = pronosticos?.find(pr => pr.jugador_id === j.id && pr.partido_id === p.id)
+      const predTxt = pred && pred.goles1 !== null ? `${pred.goles1}-${pred.goles2}` : '-'
+      const pts     = calcPts(pred, p)
+      const icon    = pts === 3 ? '✅' : pts === 1 ? '📈' : pts === 0 ? '❌' : '⏳'
+      lines.push(`  ${icon} ${j.nombre}: ${predTxt}`)
     }
+    lines.push(``)
   }
-  const dbSavePred=(jugId,midId)=>{const pred=(rrRef.current[jugId]||{})[midId];if(pred&&pred.s1!==null&&pred.s2!==null){sb.from('pronosticos').upsert({jugador_id:jugId,partido_id:midId,goles1:pred.s1,goles2:pred.s2},{onConflict:'jugador_id,partido_id'}).then()}}
-  const dbSavePlayerPreds=async(jugId,preds)=>{const rows=Object.entries(preds).filter(([,p])=>p&&p.s1!==null&&p.s2!==null).map(([mid,p])=>({jugador_id:jugId,partido_id:mid,goles1:p.s1,goles2:p.s2}));if(!rows.length)return;await sb.from('pronosticos').delete().eq('jugador_id',jugId);await sb.from('pronosticos').insert(rows)}
-  const seedPartidos=async()=>{const rows=MATCHES.map(m=>({id:m.id,grupo:m.g,equipo1:m.t1,equipo2:m.t2,goles1:null,goles2:null,fecha:m.date,hora:m.time}));await sb.from('partidos').upsert(rows)}
+  return lines.join('\n')
+}
 
-  // Debounced result save — fix para que no se borre al refrescar
-  const debounceSaveResult=(matchId,newMM)=>{
-    const cur=(newMM||mmRef.current).find(x=>x.id===matchId)
-    if(!cur)return
-    // Si los dos goles están completos, guardar inmediatamente
-    if(cur.s1!==null&&cur.s2!==null){
-      clearTimeout(saveTimer.current[matchId])
-      saveTimer.current[matchId]=true // bloquear refresh
-      dbSaveResult(cur).then(()=>{
-        saveTimer.current[matchId]=null
-        showToast('✓ Guardado')
-      })
-    }
+async function mensajeFinPartido(partido) {
+  const { data: jugadores }   = await supabase.from('jugadores').select('*').order('orden')
+  const { data: pronosticos } = await supabase.from('pronosticos').select('*').eq('partido_id', partido.id)
+  const lines = [`⚽ *FIN: ${partido.equipo1} ${partido.goles1}-${partido.goles2} ${partido.equipo2}*`, ``]
+  ;(jugadores || []).forEach(j => {
+    const pred    = pronosticos?.find(p => p.jugador_id === j.id)
+    const predTxt = pred && pred.goles1 !== null ? `${pred.goles1}-${pred.goles2}` : '-'
+    const pts     = calcPts(pred, partido)
+    lines.push(`${pts === 3 ? '✅ +3' : pts === 1 ? '📈 +1' : '❌  0'} *${j.nombre}* pronosticó ${predTxt}`)
+  })
+  return lines.join('\n')
+}
+
+// ── Helpers de envío ──────────────────────────────────────
+async function enviarAlGrupo(texto) {
+  const g = process.env.GROUP_ID
+  if (!g || !botSock) return console.log('⚠ GROUP_ID o bot no disponible')
+  await botSock.sendMessage(g, { text: texto })
+}
+
+async function enviarImagenAlGrupo(buffer, caption) {
+  const g = process.env.GROUP_ID
+  if (!g || !botSock) return console.log('⚠ GROUP_ID o bot no disponible')
+  await botSock.sendMessage(g, { image: buffer, caption, mimetype: 'image/png' })
+}
+
+// ── Handler de mensajes ───────────────────────────────────
+async function handleMessage(sock, msg) {
+  const groupId     = process.env.GROUP_ID
+  const testingMode = !groupId
+
+  const from    = msg.key.remoteJid
+  const isGroup = from.endsWith('@g.us')
+  const sender  = msg.key.participant || from  // en grupo: JID del que mandó
+
+  if (isGroup) {
+    console.log(`📨 GRUPO ID: ${from}`)
   }
 
-  useEffect(()=>{
-    const init=async()=>{
-      try{
-        const [{data:jData},{data:pData},{data:prData}]=await Promise.all([sb.from('jugadores').select('*').order('orden'),sb.from('partidos').select('id,goles1,goles2'),sb.from('pronosticos').select('*')])
-        if(jData?.length>0){const loaded=jData.map(j=>({id:j.id,name:j.nombre,orden:j.orden}));setPP(loaded);LS.set('wc26p',loaded)}
-        if(!pData||pData.length===0){await seedPartidos()}
-        else{const newMM=MATCHES.map(m=>{const db=pData.find(p=>p.id===m.id);return{...m,s1:db?.goles1??null,s2:db?.goles2??null}});setMM(newMM);LS.set('wc26m',newMM)}
-        if(prData?.length>0){const loaded={};prData.forEach(p=>{if(!loaded[p.jugador_id])loaded[p.jugador_id]={};loaded[p.jugador_id][p.partido_id]={s1:p.goles1,s2:p.goles2}});setRR(loaded);LS.set('wc26r',loaded)}
-        setSyncMsg('✓ Sincronizado')
-      }catch(e){console.error('Init error:',e);setSyncMsg('⚠ Sin conexión')}
-      setLoading(false)
+  const isFromGroup    = from === groupId
+  const isPrivateAdmin = !isGroup && sender === ADMIN_JID
+  const isGroupAdmin   = isGroup && sender === ADMIN_JID
+  const senderIsAdmin  = isPrivateAdmin || isGroupAdmin
+
+  if (!testingMode && !isFromGroup && !isPrivateAdmin) return
+  if (testingMode  && !isPrivateAdmin) return
+
+  const texto = (
+    msg.message?.conversation ||
+    msg.message?.extendedTextMessage?.text ||
+    ''
+  ).trim().toLowerCase()
+
+  const respondTo = from
+  console.log(`🤖 CMD: "${texto}" | sender: ${sender} | admin: ${ADMIN_JID} | isAdmin: ${senderIsAdmin}`)
+
+  const sendText  = async t => await sock.sendMessage(respondTo, { text: t })
+  const sendImage = async (buf, cap) => await sock.sendMessage(respondTo, { image: buf, caption: cap, mimetype: 'image/png' })
+
+  try {
+    if (texto === '!tabla') {
+      const txt = await tablaTexto()
+      await sendText(txt + '\n\n⚠️ _Esta tabla es NO OFICIAL. Se actualiza cada 2 min durante los partidos._')
     }
-    init()
-  },[])
-
-  useEffect(()=>{
-    const interval=setInterval(async()=>{
-      try{
-        const {data:pData}=await sb.from('partidos').select('id,goles1,goles2')
-        if(pData){
-          setMM(prev=>{
-            const updated=prev.map(m=>{
-              const db=pData.find(p=>p.id===m.id)
-              if(!db)return m
-              const ns1=db.goles1??null,ns2=db.goles2??null
-              // No sobreescribir si hay un guardado pendiente
-              if(saveTimer.current[m.id])return m
-              return(ns1!==m.s1||ns2!==m.s2)?{...m,s1:ns1,s2:ns2}:m
-            })
-            LS.set('wc26m',updated)
-            return updated
-          })
-          setSyncMsg('✓ '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}))
-        }
-      }catch(e){setSyncMsg('⚠ Sin conexión')}
-    },30000)
-    return()=>clearInterval(interval)
-  },[])
-
-  const doImport=async()=>{
-    setImportLog(null)
-    const line=importTxt.trim().split('\n').map(l=>l.trim()).find(l=>l.startsWith('PRODE26|'))
-    if(!line){setImportLog({ok:false,msg:'Código no reconocido.'});return}
-    const parts=line.split('|')
-    if(parts.length<3){setImportLog({ok:false,msg:'Formato incorrecto.'});return}
-    const pName=parts[1].trim()
-    const scores=parts[2].split(',')
-    if(scores.length!==MATCHES.length){setImportLog({ok:false,msg:`Se esperaban ${MATCHES.length}, llegaron ${scores.length}.`});return}
-    let player=pp.find(p=>p.name.toLowerCase()===pName.toLowerCase())
-    let newPP=pp
-    if(!player){if(pp.length>=50){setImportLog({ok:false,msg:'Límite de 50.'});return};player={id:`p${Date.now()}`,name:pName};newPP=[...pp,player]}
-    const newPreds={...(rr[player.id]||{})}
-    let loaded=0,skipped=0
-    MATCHES.forEach((m,i)=>{const sc=scores[i];if(!sc||sc==='?'||sc===''){skipped++;return};const [s1s,s2s]=sc.split('-');const s1=parseInt(s1s),s2=parseInt(s2s);if(isNaN(s1)||isNaN(s2)){skipped++;return};newPreds[m.id]={s1:Math.max(0,Math.min(20,s1)),s2:Math.max(0,Math.min(20,s2))};loaded++})
-    svAll(newPP,mm,{...rr,[player.id]:newPreds})
-    setImportTxt('');setSimResult(null)
-    setImportLog({ok:true,msg:`✅ ${pName}: ${loaded} pronósticos${skipped>0?`, ${skipped} vacíos`:''}.`})
-    showToast(`✓ ${pName}`)
-    try{await sb.from('jugadores').upsert({id:player.id,nombre:player.name,orden:newPP.findIndex(p=>p.id===player.id)});if(newPP.length>pp.length)await dbSavePlayers(newPP);await dbSavePlayerPreds(player.id,newPreds)}catch(e){console.error('Import SB:',e)}
+    else if (texto === '!hoy') {
+      await sendText(await tablaDiaTexto(new Date().toISOString().slice(0, 10)))
+    }
+    else if (texto.startsWith('!dia ')) {
+      await sendText(await tablaDiaTexto(texto.replace('!dia ', '').trim()))
+    }
+    else if (texto === '!chances') {
+      await sendText(await chancesTexto())
+    }
+    else if (texto === '!ayuda' || texto === 'hola' || texto === 'ping') {
+      await sendText(
+        `🤖 *Prode Mundial 2026 — Comandos:*\n\n` +
+        `!tabla → Tabla NO OFICIAL (en vivo)\n` +
+        `!hoy → Partidos de hoy + pronósticos\n` +
+        `!dia YYYY-MM-DD → Partidos de una fecha\n` +
+        `!chances → Quién sigue en carrera\n` +
+        `!ayuda → Este mensaje`
+      )
+    }
+    else if (senderIsAdmin && texto === '!oficial') {
+      if (!groupId) { await sendText('❌ GROUP_ID no configurado'); return }
+      const board = await buildBoard()
+      if (!board.length) { await sendText('No hay datos aún'); return }
+      const img = await generarTablaImagen(board, 'oficial')
+      await enviarImagenAlGrupo(img, '🏆 TABLA OFICIAL — PRODE MUNDIAL 2026')
+      if (isPrivateAdmin) await sendText('✅ Tabla oficial enviada al grupo')
+    }
+    else if (senderIsAdmin && texto === '!resumen') {
+      if (!groupId) { await sendText('❌ GROUP_ID no configurado'); return }
+      const hoy = new Date().toISOString().slice(0, 10)
+      const txt = await tablaDiaTexto(hoy)
+      await enviarAlGrupo(txt)
+      if (isPrivateAdmin) await sendText('✅ Resumen enviado al grupo')
+    }
+    else if (senderIsAdmin && texto === '!forzar') {
+      if (!groupId) { await sendText('❌ GROUP_ID no configurado'); return }
+      const board = await buildBoard()
+      const img   = await generarTablaImagen(board, 'oficial')
+      await enviarImagenAlGrupo(img, '🏆 TABLA OFICIAL — PRODE MUNDIAL 2026')
+      if (isPrivateAdmin) await sendText('✅ Tabla enviada al grupo')
+    }
+    else if (senderIsAdmin && texto === '!sync') {
+      await sendText('🔄 Sincronizando...')
+      await verificarPartidosEnVivo(true)
+      await sendText('✅ Sync completado')
+    }
+    else if (senderIsAdmin && texto.startsWith('!resultado ')) {
+      await handleResultadoManual(sock, texto, respondTo)
+    }
+    else if (senderIsAdmin && texto === '!estado') {
+      const { data: p } = await supabase.from('partidos').select('id').not('goles1', 'is', null)
+      const { data: j } = await supabase.from('jugadores').select('id')
+      await sendText(
+        `📊 *Estado:*\nJugadores: ${j?.length || 0}\nPartidos jugados: ${p?.length || 0}/72\n` +
+        `GROUP_ID: ${groupId || '❌ NO CONFIGURADO'}\nAPI fútbol: ${process.env.FOOTBALL_API_KEY ? '✅' : '❌'}`
+      )
+    }
+    else if (testingMode) {
+      await sendText(`Recibí: "${texto.slice(0,50)}". Probá con !ayuda`)
+    }
+  } catch (e) {
+    console.error('Error handler:', e.message)
+    try { await sendText(`❌ Error: ${e.message}`) } catch {}
   }
+}
 
-  const board=buildBoard(pp,mm,rr)
-  const dayMatches=(dayFilter?mm.filter(m=>getMatchDate(m.id)===dayFilter):[...mm].filter(m=>m.s1!==null).sort((a,b)=>a.date?.localeCompare(b.date)||0).slice(-4)).sort((a,b)=>(a.time||'').localeCompare(b.time||'')||0)
-  const dayLabel=dayFilter?fmtDate(dayFilter):'Últimos resultados'
-  const si={width:36,textAlign:'center',background:'#e8f0fe',border:'1px solid #333',borderRadius:6,color:'white',fontSize:16,fontWeight:700,padding:'4px 2px',outline:'none'}
-  const pill=a=>({padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:a?'#6a0dad':'#ebebeb',color:a?'white':'#555'})
+// ── Resultado manual (admin) ──────────────────────────────
+async function handleResultadoManual(sock, texto, respondTo) {
+  const sendText = async t => await sock.sendMessage(respondTo, { text: t })
+  const partes = texto.replace('!resultado ', '').trim().split(' ')
+  if (partes.length < 4) {
+    await sendText('❌ Formato: !resultado Equipo1 goles1 Equipo2 goles2\nEj: !resultado Argentina 2 Francia 1')
+    return
+  }
+  const g2  = parseInt(partes[partes.length - 1])
+  const g1  = parseInt(partes[partes.length - 2])
+  const mid = Math.floor(partes.length / 2)
+  const t1  = partes.slice(0, mid).join(' ')
+  const t2  = partes.slice(mid, partes.length - 2).join(' ')
+  if (isNaN(g1) || isNaN(g2)) { await sendText('❌ Los goles deben ser números'); return }
 
-  if(loading)return(<div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}><div style={{fontSize:48}}>⚽</div><div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>Prode Mundial 2026</div><div style={{fontSize:14,color:'#888'}}>Cargando datos...</div><div style={{width:48,height:48,border:'4px solid #333',borderTop:'4px solid #6a0dad',borderRadius:'50%',animation:'spin 1s linear infinite'}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>)
-
-  return(
-    <div style={{minHeight:'100vh',background:'#f0f2f5',color:'white',maxWidth:430,margin:'0 auto',paddingBottom:72}}>
-      {toast&&<div style={{position:'fixed',top:16,left:'50%',transform:'translateX(-50%)',background:toast.color,color:'white',padding:'8px 18px',borderRadius:20,fontSize:13,fontWeight:700,zIndex:999,boxShadow:'0 4px 12px rgba(0,0,0,0.4)'}}>{toast.msg}</div>}
-      <div style={{background:'linear-gradient(135deg,#6a0dad,#4a0090)',padding:'12px 16px 10px',textAlign:'center',position:'sticky',top:0,zIndex:50,borderBottom:'1px solid #1a2a4a'}}>
-        <div style={{fontSize:16,fontWeight:800,color:'#f0c030',letterSpacing:1}}>⚽ PRODE 2026 — ADMIN</div>
-        <div style={{fontSize:10,color:'#aaa',marginTop:1}}>{played}/72 partidos · {syncMsg}</div>
-      </div>
-
-      {tab==='tabla'&&(()=>{
-        const modo=tablaMode
-        const hdrBg=modo==='oficial'?'#6a0dad':modo==='nooficial'?'#1a6b8a':'#1a1a2e'
-        const statsBg=modo==='oficial'?'#27ae60':modo==='nooficial'?'#e67e22':'#2a2a3a'
-        const titulo=modo==='oficial'?'TABLA OFICIAL':modo==='nooficial'?'TABLA NO OFICIAL':null
-        const rowEven=modo==='oficial'?'#fdf6ff':modo==='nooficial'?'#f0f8ff':'#ffffff'
-        const rowOdd=modo==='oficial'?'#f5ecff':modo==='nooficial'?'#e8f4fb':'#f7f8fa'
-        return(<div style={{padding:'10px 10px 0'}}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
-            <button onClick={()=>setTablaMode(modo==='oficial'?null:'oficial')} style={{padding:'10px',background:modo==='oficial'?'#6a0dad':'#2a1a3a',border:`2px solid ${modo==='oficial'?'#a64dff':'#3a2a4a'}`,borderRadius:10,color:'white',fontWeight:800,fontSize:13,cursor:'pointer'}}>📄 Tabla Oficial</button>
-            <button onClick={()=>setTablaMode(modo==='nooficial'?null:'nooficial')} style={{padding:'10px',background:modo==='nooficial'?'#1a6b8a':'#0a1a2a',border:`2px solid ${modo==='nooficial'?'#2eafd4':'#1a2a3a'}`,borderRadius:10,color:'white',fontWeight:800,fontSize:13,cursor:'pointer'}}>📄 No Oficial</button>
-          </div>
-          {board.length===0?(<div style={{textAlign:'center',color:'#888',padding:'50px 0'}}><div style={{fontSize:48}}>🏆</div><div style={{fontSize:13,marginTop:10}}>Sin datos. Importá pronósticos.</div></div>):(
-            <div style={{borderRadius:10,overflow:'hidden',border:`1px solid ${modo?hdrBg:'#2a2a3a'}`}}>
-              {titulo&&(<div style={{display:'flex',background:hdrBg}}><div style={{flex:1,padding:'9px 12px',fontSize:14,fontWeight:900,color:'white',letterSpacing:1}}>{titulo}</div><div style={{background:statsBg,padding:'9px 12px',fontSize:10,fontWeight:700,color:'white',display:'flex',alignItems:'center',letterSpacing:1}}>RESULTADOS</div></div>)}
-              <div style={{display:'flex',background:hdrBg,padding:'6px 0',borderTop:titulo?'1px solid rgba(255,255,255,0.1)':'none'}}>
-                <div style={{width:32,textAlign:'center',fontSize:10,fontWeight:700,color:'white'}}>POS</div>
-                <div style={{flex:1,fontSize:10,fontWeight:700,color:'white',paddingLeft:6}}>JUGADOR</div>
-                <div style={{width:36,textAlign:'center',fontSize:10,fontWeight:700,color:'white'}}>PTS</div>
-                <div style={{width:28,textAlign:'center',fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.7)'}}>JUG</div>
-                <div style={{width:24,textAlign:'center',fontSize:9,fontWeight:700,background:statsBg,color:'white'}}>3</div>
-                <div style={{width:24,textAlign:'center',fontSize:9,fontWeight:700,background:statsBg,color:'white'}}>1</div>
-                <div style={{width:24,textAlign:'center',fontSize:9,fontWeight:700,background:statsBg,color:'white'}}>0</div>
-                <div style={{width:40,textAlign:'center',fontSize:9,fontWeight:700,background:statsBg,color:'white'}}>%</div>
-              </div>
-              {board.map((p,i)=>{const bg=i%2===0?rowEven:rowOdd;const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':null;const c3=modo==='oficial'?'#1e8449':'#1e8449';const c1=modo==='oficial'?'#b7770d':'#b7770d';const c0=modo==='oficial'?'#c0392b':'#c0392b';return(<div key={p.id} style={{display:'flex',alignItems:'center',background:bg,borderBottom:'1px solid #eaecf0',padding:'5px 0'}}><div style={{width:32,textAlign:'center',fontSize:medal?16:12,color:'#999',fontWeight:700}}>{medal||i+1}</div><div style={{flex:1,paddingLeft:6,minWidth:0}}><div style={{fontSize:12,fontWeight:700,color:'#1a1a1a',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</div></div><div style={{width:36,textAlign:'center',fontSize:15,fontWeight:900,color:'#6a0dad'}}>{p.tot}</div><div style={{width:28,textAlign:'center',fontSize:10,color:'#888'}}>{p.jug}</div><div style={{width:24,textAlign:'center',fontSize:10,fontWeight:700,color:c3}}>{p.ex}</div><div style={{width:24,textAlign:'center',fontSize:10,fontWeight:700,color:c1}}>{p.lv}</div><div style={{width:24,textAlign:'center',fontSize:10,fontWeight:700,color:c0}}>{p.fail}</div><div style={{width:40,textAlign:'center',fontSize:9,color:'#888'}}>{p.pct}</div></div>)})}
-            </div>
-          )}
-        </div>)
-      })()}
-
-      {tab==='dia'&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#f0c030',marginBottom:8}}>📅 Tabla del Día</div>
-          <input type="date" value={dayFilter} onChange={e=>setDayFilter(e.target.value)} style={{width:'100%',padding:'8px 12px',borderRadius:8,border:'1px solid #e0e4ea',background:'#e8f0fe',color:'white',fontSize:14,outline:'none',marginBottom:8}}/>
-          <button onClick={()=>exportDayPDF(dayMatches,pp,rr,dayLabel)} style={{width:'100%',padding:'10px',background:'#6a0dad',border:'none',borderRadius:8,color:'white',fontWeight:800,fontSize:13,cursor:'pointer'}}>📲 Exportar tabla del día (PDF)</button>
-        </div>
-        {dayMatches.length===0?(<div style={{textAlign:'center',color:'#999',padding:30}}>No hay partidos para esta fecha</div>):(
-          <div style={{borderRadius:12,overflow:'hidden',border:'1px solid #dde3ec'}}>
-            <div style={{background:'#6a0dad',padding:'10px 14px',textAlign:'center',fontSize:15,fontWeight:900,color:'white',letterSpacing:2}}>⚽ {dayLabel.toUpperCase()}</div>
-            <div style={{display:'flex',background:'#f3eeff',borderBottom:'2px solid #c9a0f0'}}>
-              <div style={{width:120,flexShrink:0,padding:'8px 10px',fontSize:10,fontWeight:800,color:'#6a0dad',borderRight:'2px solid #c9a0f0'}}>JUGADOR</div>
-              {dayMatches.map(m=>(<div key={m.id} style={{flex:1,padding:'6px 4px',textAlign:'center',fontSize:9,fontWeight:700,color:'#4a0090',lineHeight:1.4,borderLeft:'1px solid #c9a0f0'}}><div style={{fontWeight:800}}>{m.t1.length>9?m.t1.split(' ')[0]:m.t1}</div><div style={{color:'#aaa',fontWeight:400,fontSize:8}}>vs</div><div style={{fontWeight:800}}>{m.t2.length>9?m.t2.split(' ')[0]:m.t2}</div>{m.s1!==null&&<div style={{color:'#6a0dad',fontWeight:900,fontSize:12,marginTop:3}}>{m.s1}-{m.s2}</div>}</div>))}
-            </div>
-            {pp.map((p,i)=>{const rowBg=i%2===0?'#ffffff':'#faf7ff';return(<div key={p.id} style={{display:'flex',alignItems:'stretch',background:rowBg,borderBottom:'1px solid #ede8f7'}}><div style={{width:120,flexShrink:0,padding:'7px 10px',fontSize:11,fontWeight:700,color:'#1a1a2e',display:'flex',alignItems:'center',borderRight:'2px solid #c9a0f0',overflow:'hidden',whiteSpace:'nowrap'}}><span style={{color:'#9b59b6',marginRight:4,fontSize:10}}>{i+1}.</span>{p.name}</div>{dayMatches.map(m=>{const pred=(rr[p.id]||{})[m.id];const pts=calcPts(pred,m);const txt=(pred&&pred.s1!==null&&pred.s2!==null)?`${pred.s1}-${pred.s2}`:'-';const cellBg=pts===3?'#d5f5e3':pts===1?'#fdebd0':pts===0&&m.s1!==null?'#fadbd8':rowBg;const cellColor=pts===3?'#1e8449':pts===1?'#935116':pts===0&&m.s1!==null?'#c0392b':'#ccc';return(<div key={m.id} style={{flex:1,textAlign:'center',padding:'7px 3px',fontSize:12,fontWeight:txt!=='-'?800:400,color:cellColor,background:cellBg,borderLeft:'1px solid #ede8f7',display:'flex',alignItems:'center',justifyContent:'center'}}>{txt}</div>)})}</div>)})}
-            <div style={{background:'#f9f6ff',padding:'7px',display:'flex',justifyContent:'center',gap:16,fontSize:10,borderTop:'1px solid #ede8f7'}}><span style={{color:'#1e8449',fontWeight:700}}>● Exacto +3</span><span style={{color:'#935116',fontWeight:700}}>● Levante +1</span><span style={{color:'#c0392b',fontWeight:700}}>● Fallado</span></div>
-          </div>
-        )}
-      </div>)}
-
-      {tab==='datos'&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e67e22'}}>
-          <div style={{fontSize:13,fontWeight:800,color:'#e67e22',marginBottom:8}}>💾 Backup de datos</div>
-          <div style={{display:'flex',gap:8}}>
-            <button onClick={()=>{const data=JSON.stringify({pp,mm,rr,ts:new Date().toISOString()});const blob=new Blob([data],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`prode2026_backup_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.json`;a.click();URL.revokeObjectURL(url);showToast('✓ Backup descargado')}} style={{flex:1,padding:'10px',background:'#e67e22',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>⬇️ Descargar backup</button>
-            <label style={{flex:1,padding:'10px',background:'#2a1a0a',border:'2px solid #e67e22',borderRadius:8,color:'#e67e22',fontWeight:700,fontSize:13,cursor:'pointer',textAlign:'center'}}>⬆️ Restaurar<input type="file" accept=".json" style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const d=JSON.parse(ev.target.result);if(!d.pp||!d.mm||!d.rr){showToast('Archivo inválido','#e74c3c');return};svAll(d.pp,d.mm,d.rr);showToast(`✓ Restaurado (${d.pp.length} jugadores)`);e.target.value=''}catch{showToast('Error al leer el archivo','#e74c3c')}};reader.readAsText(file)}}/></label>
-          </div>
-        </div>
-        <div style={{display:'flex',flexDirection:'column',gap:10}}>
-          <button onClick={()=>exportAllPredictions(pp,mm,rr)} style={{padding:'14px',background:'#8e44ad',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:24}}>📋</span><div><div style={{fontWeight:800}}>Todos los pronósticos</div><div style={{fontSize:11,opacity:0.7,marginTop:2}}>PDF con todos los grupos y jugadores</div></div></button>
-          <div style={{background:'#ffffff',borderRadius:10,border:'1px solid #e0e4ea',overflow:'hidden'}}>
-            <button onClick={()=>{setSimResult(simulateChances(pp,mm,rr));showToast('✓ Simulación activa')}} style={{width:'100%',padding:'14px',background:'transparent',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:24}}>🎲</span><div><div style={{fontWeight:800}}>Simular chances</div><div style={{fontSize:11,color:'#888',marginTop:2}}>Ver quién puede ganar</div></div></button>
-            {simResult&&(<div style={{padding:'0 12px 12px'}}>{simulateChances(pp,mm,rr).map((p,i)=>(<div key={p.id} style={{display:'flex',alignItems:'center',padding:'5px 0',borderBottom:'1px solid #eaecf0'}}><span style={{width:24,fontSize:11,color:'#888'}}>{i+1}</span><span style={{flex:1,fontSize:13,color:p.canWin?'#1a1a2e':'#aaa',textDecoration:p.canWin?'none':'line-through'}}>{p.name}</span><span style={{fontSize:12,fontWeight:700,color:'#f0c030',marginRight:8}}>{p.tot}pts</span><span style={{fontSize:10,color:p.canWin?'#2ecc71':'#e74c3c'}}>{p.canWin?`max:${p.maxPossible}`:'❌'}</span></div>))}<button onClick={()=>setSimResult(null)} style={{width:'100%',marginTop:8,padding:'7px',background:'#333',border:'none',borderRadius:8,color:'#777',cursor:'pointer',fontSize:12}}>✕ Cerrar simulación</button></div>)}
-          </div>
-          <button onClick={()=>exportPDF(board,true)} style={{padding:'14px',background:'#2a1a3a',border:'2px solid #6a0dad',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:24}}>📄</span><div><div style={{fontWeight:800}}>PDF Tabla Oficial</div></div></button>
-          <button onClick={()=>exportPDF(board,false)} style={{padding:'14px',background:'#0a1a2a',border:'2px solid #1a6b8a',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:24}}>📄</span><div><div style={{fontWeight:800}}>PDF Tabla No Oficial</div></div></button>
-        </div>
-      </div>)}
-
-      {tab==='import'&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}><div style={{fontSize:15,fontWeight:700,color:'#f0c030',marginBottom:4}}>📥 Importar pronósticos</div><div style={{fontSize:12,color:'#888'}}>Pegá el código que te mandó el jugador</div></div>
-        <textarea value={importTxt} onChange={e=>setImportTxt(e.target.value)} placeholder={'Pegá aquí el código...\n\nPRODE26|Nombre|2-1,0-0,...'} style={{width:'100%',height:130,padding:'12px',background:'#e8f0fe',border:'1px solid #e0e4ea',borderRadius:10,color:'white',fontSize:13,fontFamily:'monospace',outline:'none',resize:'vertical',marginBottom:8}}/>
-        <button onClick={doImport} style={{width:'100%',padding:'12px',background:importTxt.trim()?'#f0c030':'#333',border:'none',borderRadius:10,color:'#1a1a2e',fontWeight:800,fontSize:15,cursor:importTxt.trim()?'pointer':'not-allowed',marginBottom:10}}>📥 Importar</button>
-        {importLog&&<div style={{background:importLog.ok?'rgba(39,174,96,0.15)':'rgba(231,76,60,0.15)',border:`1px solid ${importLog.ok?'#27ae60':'#e74c3c'}`,borderRadius:10,padding:'10px',fontSize:12,color:importLog.ok?'#2ecc71':'#e74c3c'}}>{importLog.msg}</div>}
-      </div>)}
-
-      {tab==='jugadores'&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'white',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#6a0dad',marginBottom:8}}>👥 Jugadores ({pp.length}/50)</div>
-          <div style={{display:'flex',gap:6}}>
-            <input value={newN} onChange={e=>setNewN(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newN.trim()&&pp.length<50){const newPP=[...pp,{id:`p${Date.now()}`,name:newN.trim()}];svP(newPP);dbSavePlayers(newPP);setNewN('');showToast('✓ Agregado')}}} placeholder="Nombre" style={{flex:1,padding:'8px 10px',borderRadius:8,border:'1px solid #e0e4ea',background:'#f4f5f7',color:'#1a1a2e',fontSize:14,outline:'none'}}/>
-            <button onClick={()=>{if(!newN.trim()||pp.length>=50)return;const newPP=[...pp,{id:`p${Date.now()}`,name:newN.trim()}];svP(newPP);dbSavePlayers(newPP);setNewN('');showToast('✓ Agregado')}} style={{padding:'8px 14px',background:pp.length>=50||!newN.trim()?'#ccc':'#6a0dad',color:'white',borderRadius:8,fontWeight:700,border:'none',cursor:'pointer',fontSize:15}}>+</button>
-          </div>
-        </div>
-        {pp.map((p,i)=>{const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length;const isEditing=editingId===p.id;const moveUp=()=>{if(i===0)return;const r=[...pp];[r[i-1],r[i]]=[r[i],r[i-1]];svP(r);dbSavePlayers(r)};const moveDown=()=>{if(i===pp.length-1)return;const r=[...pp];[r[i],r[i+1]]=[r[i+1],r[i]];svP(r);dbSavePlayers(r)};return(<div key={p.id} style={{background:'white',borderRadius:8,padding:'9px 12px',marginBottom:5,border:'1px solid #e0e4ea'}}><div style={{display:'flex',alignItems:'center',gap:6}}><div style={{display:'flex',flexDirection:'column',gap:0,flexShrink:0}}><button onClick={moveUp} style={{background:'transparent',border:'none',color:i===0?'#ddd':'#6a0dad',cursor:i===0?'default':'pointer',fontSize:13,lineHeight:1,padding:'1px 4px',fontWeight:900}}>▲</button><button onClick={moveDown} style={{background:'transparent',border:'none',color:i===pp.length-1?'#ddd':'#6a0dad',cursor:i===pp.length-1?'default':'pointer',fontSize:13,lineHeight:1,padding:'1px 4px',fontWeight:900}}>▼</button></div><div style={{width:22,height:22,borderRadius:'50%',background:'#ede9f7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#6a0dad',fontWeight:700,flexShrink:0}}>{i+1}</div>{isEditing?(<input autoFocus value={editingName} onChange={e=>setEditingName(e.target.value)} onBlur={()=>{if(editingName.trim()){const newPP=pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x);svP(newPP);dbSavePlayers(newPP)};setEditingId(null)}} onKeyDown={e=>{if(e.key==='Enter'){if(editingName.trim()){const newPP=pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x);svP(newPP);dbSavePlayers(newPP)};setEditingId(null)}if(e.key==='Escape')setEditingId(null)}} style={{flex:1,fontSize:14,color:'#1a1a2e',border:'2px solid #6a0dad',borderRadius:6,padding:'4px 8px',outline:'none'}}/>):(<span onClick={()=>{setEditingId(p.id);setEditingName(p.name)}} style={{flex:1,fontSize:14,color:'#1a1a2e',cursor:'pointer'}}>{p.name} <span style={{fontSize:10,color:'#bbb'}}>✏️</span></span>)}<span style={{fontSize:10,color:done===72?'#27ae60':done>0?'#6a0dad':'#ccc',flexShrink:0}}>{done}/72</span><button onClick={()=>{const r2={...rr};delete r2[p.id];const newPP=pp.filter(x=>x.id!==p.id);svAll(newPP,mm,r2);setSimResult(null);dbDeletePlayer(p.id);showToast('Eliminado','#e74c3c')}} style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:20,lineHeight:1,padding:'0 2px',flexShrink:0}}>×</button></div><div style={{marginTop:5,background:'#f0f2f5',borderRadius:3,height:3,marginLeft:62}}><div style={{background:done===72?'#27ae60':'#6a0dad',width:`${(done/72)*100}%`,height:'100%',borderRadius:3}}/></div></div>)})}
-      </div>)}
-
-      {tab==='pronos'&&!selP&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}><div style={{fontSize:15,fontWeight:700,color:'#f0c030'}}>📝 Pronósticos por jugador</div></div>
-        {pp.map(p=>{const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length;return(<div key={p.id} onClick={()=>{setSelP(p);setPGrp('ALL')}} style={{background:'#ffffff',borderRadius:10,padding:'10px 14px',marginBottom:5,display:'flex',alignItems:'center',gap:10,cursor:'pointer',border:'1px solid #e0e4ea'}}><div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:'#1a1a2e'}}>{p.name}</div><div style={{marginTop:5,background:'#e8f0fe',borderRadius:4,height:3}}><div style={{background:done===72?'#2ecc71':'#f0c030',width:`${(done/72)*100}%`,height:'100%',borderRadius:4}}/></div><div style={{fontSize:10,color:done===72?'#2ecc71':'#888',marginTop:3}}>{done}/72</div></div><span style={{color:'#4a9eff',fontSize:18}}>›</span></div>)})}
-      </div>)}
-
-      {tab==='pronos'&&selP&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:'9px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8,border:'1px solid #e0e4ea'}}><button onClick={()=>setSelP(null)} style={{background:'transparent',border:'none',color:'#4a9eff',cursor:'pointer',fontSize:22,lineHeight:1,padding:0}}>←</button><div style={{fontWeight:700,color:'#f0c030',fontSize:14,flex:1}}>{selP.name}</div></div>
-        <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:6,marginBottom:8}}>{['ALL',...grps].map(g=><button key={g} onClick={()=>setPGrp(g)} style={pill(pGrp===g)}>{g==='ALL'?'Todos':'G'+g}</button>)}</div>
-        <div style={{display:'flex',flexDirection:'column',gap:5}}>
-          {(pGrp==='ALL'?mm:mm.filter(m=>m.g===pGrp)).map(m=>{const pred=(rr[selP.id]||{})[m.id];const p2=calcPts(pred,m);const has=pred&&pred.s1!==null&&pred.s2!==null;const bc=p2===3?'#27ae60':p2===1?'#f39c12':(p2===0&&m.s1!==null&&has)?'#e74c3c':'#2a2a3a';const bg=p2===3?'rgba(39,174,96,0.08)':p2===1?'rgba(243,156,18,0.08)':(p2===0&&m.s1!==null&&has)?'rgba(231,76,60,0.06)':'#16213e';return(<div key={m.id} style={{background:bg,border:`1px solid ${bc}`,borderRadius:10,padding:'8px 10px'}}><div style={{display:'flex',alignItems:'center',marginBottom:5}}><span style={{fontSize:9,color:'#6a0dad',background:'#ede9f7',padding:'1px 5px',borderRadius:4,fontWeight:700}}>G{m.g}</span>{p2===3&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:6}}>⚡+3</span>}{p2===1&&<span style={{fontSize:10,color:'#f0c030',marginLeft:6}}>📈+1</span>}{p2===0&&m.s1!==null&&has&&<span style={{fontSize:10,color:'#e74c3c',marginLeft:6}}>✗</span>}{m.s1!==null&&<span style={{fontSize:10,color:'#999',marginLeft:'auto'}}>Real:{m.s1}-{m.s2}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span><input type="number" value={pred?.s1??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{color:'#aaa',fontWeight:700}}>-</span><input type="number" value={pred?.s2??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span></div></div>)})}
-        </div>
-      </div>)}
-
-      {tab==='resultados'&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#f0c030',marginBottom:8}}>⚙️ Resultados Reales</div>
-          <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:2}}>{grps.map(g=>{const done=mm.filter(m=>m.g===g&&m.s1!==null).length;return<button key={g} onClick={()=>setAGrp(g)} style={pill(aGrp===g)}>G{g} {done}/6</button>})}</div>
-        </div>
-        {[...mm].filter(m=>m.g===aGrp).sort((a,b)=>a.date?.localeCompare(b.date)||0).map((m,idx)=>{
-          const mDate=getMatchDate(m.id)
-          const jornada=idx<2?1:idx<4?2:3
-          return(<div key={m.id} style={{background:m.s1!==null?'rgba(39,174,96,0.06)':'#ffffff',border:`1px solid ${m.s1!==null?'#27ae60':'#2a2a3a'}`,borderRadius:10,padding:'9px 10px',marginBottom:5}}>
-            <div style={{display:'flex',alignItems:'center',marginBottom:5,gap:8}}>
-              <span style={{fontSize:9,background:'#ede9f7',color:'#6a0dad',padding:'2px 6px',borderRadius:4,fontWeight:700}}>J{jornada}</span>
-              <span style={{fontSize:10,color:'#888'}}>📅 {mDate?fmtDate(mDate):''}{getMatchTime(m.id)?' · ⏰ '+getMatchTime(m.id)+'hs':''}</span>
-              {m.s1!==null&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:'auto'}}>✓ {m.s1}-{m.s2}</span>}
-              {m.s1!==null&&<button onClick={async()=>{const newMM=mm.map(x=>x.id===m.id?{...x,s1:null,s2:null}:x);svM(newMM);await dbSaveResult({...m,s1:null,s2:null});showToast('Borrado','#e74c3c')}} style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:11,padding:0}}>✕</button>}
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span>
-              <input type="number" value={m.s1??''} min="0" max="20"
-                onChange={e=>{const v=toNum(e.target.value);const nm=mm.map(x=>x.id===m.id?{...x,s1:v}:x);svM(nm);debounceSaveResult(m.id,nm)}}
-                style={si}/>
-              <span style={{color:'#aaa',fontWeight:700}}>-</span>
-              <input type="number" value={m.s2??''} min="0" max="20"
-                onChange={e=>{const v=toNum(e.target.value);const nm=mm.map(x=>x.id===m.id?{...x,s2:v}:x);svM(nm);debounceSaveResult(m.id,nm)}}
-                style={si}/>
-              <span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span>
-            </div>
-          </div>)
-        })}
-      </div>)}
-
-      <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#ffffff',borderTop:'1px solid #dde3ec',display:'flex',zIndex:100}}>
-        {[['tabla','🏆','Tabla'],['dia','📅','Día'],['datos','📊','Datos'],['import','📥','Import'],['jugadores','👥','Jugadores'],['pronos','📝','Pronos'],['resultados','⚙️','Result.']].map(([id,ic,la])=>(<button key={id} onClick={()=>{setTab(id);if(id!=='pronos')setSelP(null)}} style={{flex:1,padding:'7px 1px 5px',background:'transparent',border:'none',cursor:'pointer',color:tab===id?'#6a0dad':'#aaa',display:'flex',flexDirection:'column',alignItems:'center',gap:1,fontSize:7,fontWeight:tab===id?700:400}}><span style={{fontSize:16}}>{ic}</span>{la}</button>))}
-      </div>
-    </div>
+  const { data: partidos } = await supabase.from('partidos').select('*')
+  const partido = partidos?.find(p =>
+    (p.equipo1.toLowerCase().includes(t1.toLowerCase()) || t1.toLowerCase().includes(p.equipo1.toLowerCase())) &&
+    (p.equipo2.toLowerCase().includes(t2.toLowerCase()) || t2.toLowerCase().includes(p.equipo2.toLowerCase()))
   )
+  if (!partido) { await sendText(`❌ No encontré "${t1} vs ${t2}"`); return }
+
+  const { error } = await supabase.from('partidos').update({ goles1: g1, goles2: g2 }).eq('id', partido.id)
+  if (error) { await sendText(`❌ Error: ${error.message}`); return }
+
+  await sendText(`✅ ${partido.equipo1} ${g1}-${g2} ${partido.equipo2}`)
+  const groupId = process.env.GROUP_ID
+  if (groupId) {
+    const msgFin = await mensajeFinPartido({ ...partido, goles1: g1, goles2: g2 })
+    await enviarAlGrupo(msgFin)
+    setTimeout(async () => {
+      try {
+        const board = await buildBoard()
+        const img   = await generarTablaImagen(board, 'oficial')
+        await enviarImagenAlGrupo(img, '🏆 TABLA ACTUALIZADA')
+      } catch(e) { console.error(e.message) }
+    }, 3000)
+  }
 }
 
-function App(){
-  const [hash,setHash]=useState(window.location.hash)
-  useEffect(()=>{const h=()=>setHash(window.location.hash);window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h)},[])
-  if(hash==='#admin'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <Admin/>;return <PinGate/>}
-  return <Jugador/>
+// ── Polling football-data.org ─────────────────────────────
+const finalizados = new Set()
+
+
+async function chancesTexto() {
+  const board = await buildBoard()
+  const { data: partidos } = await supabase.from('partidos').select('*')
+  const rem = (partidos || []).filter(p => p.goles1 === null).length
+  if (!board.length) return 'No hay datos aún.'
+  const top = board[0].tot
+  const lines = ['🎯 *CHANCES DE GANAR — PRODE 2026*', '']
+  let hayAlguno = false
+  board.forEach((p, i) => {
+    const maxP = p.tot + rem * 3
+    const puede = maxP >= top
+    if (puede) {
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`
+      lines.push(`${medal} *${p.nombre || p.name}* — ${p.tot}pts (máx ${maxP})`)
+      hayAlguno = true
+    }
+  })
+  if (!hayAlguno) lines.push('_Nadie puede ganar... algo salió muy mal_ 😅')
+  lines.push('')
+  lines.push(`_${rem} partidos restantes · Exacto=3pts_`)
+  return lines.join('\n')
 }
 
-function PinGate(){
-  const [pin,setPin]=useState('')
-  const [err,setErr]=useState(false)
-  const check=()=>{if(pin==='2026'){localStorage.setItem('wc26_pin_ok','yes');window.location.reload()}else{setErr(true);setTimeout(()=>setErr(false),1500)}}
-  return(<div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,padding:20}}><div style={{fontSize:48}}>🔐</div><div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>Acceso Admin</div><input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==='Enter'&&check()} placeholder="PIN" style={{padding:'12px 20px',fontSize:22,borderRadius:12,border:`2px solid ${err?'#e74c3c':'#6a0dad'}`,background:'#2a2a3e',color:'white',textAlign:'center',outline:'none',width:160,letterSpacing:8}}/>{err&&<div style={{color:'#e74c3c',fontSize:13}}>PIN incorrecto</div>}<button onClick={check} style={{padding:'12px 32px',background:'#6a0dad',border:'none',borderRadius:12,color:'white',fontWeight:800,fontSize:16,cursor:'pointer'}}>Entrar</button></div>)
+async function verificarPartidosEnVivo(forzar = false) {
+  if (!process.env.FOOTBALL_API_KEY) { if (forzar) console.log('⚠ FOOTBALL_API_KEY no configurada'); return }
+  try {
+    const hoy         = new Date().toISOString().slice(0, 10)
+    const competition = process.env.FOOTBALL_COMPETITION || 'WC'
+    const res = await axios.get(`https://api.football-data.org/v4/competitions/${competition}/matches`, {
+      params: { dateFrom: hoy, dateTo: hoy },
+      headers: { 'X-Auth-Token': process.env.FOOTBALL_API_KEY },
+      timeout: 10000
+    })
+    const matches = res.data?.matches || []
+    if (forzar) console.log(`📡 API: ${matches.length} partidos encontrados`)
+    const { data: dbHoy } = await supabase.from('partidos').select('*').eq('fecha', hoy)
+
+    for (const f of matches) {
+      const status = f.status
+      const g1     = f.score?.fullTime?.home ?? null
+      const g2     = f.score?.fullTime?.away ?? null
+      const t1     = mapTeam(f.homeTeam?.name || '')
+      const t2     = mapTeam(f.awayTeam?.name || '')
+      const partido = dbHoy?.find(p => (p.equipo1 === t1 && p.equipo2 === t2) || (p.equipo1 === t2 && p.equipo2 === t1))
+      if (!partido) { if (forzar) console.log(`⚠ No encontrado: "${t1}" vs "${t2}"`); continue }
+
+      if (g1 !== null && g2 !== null && (partido.goles1 !== g1 || partido.goles2 !== g2)) {
+        await supabase.from('partidos').update({ goles1: g1, goles2: g2 }).eq('id', partido.id)
+        if (forzar) console.log(`📊 ${partido.equipo1} ${g1}-${g2} ${partido.equipo2}`)
+      }
+
+      const key = `${hoy}_${partido.id}`
+      if (status === 'FINISHED' && !finalizados.has(key)) {
+        finalizados.add(key)
+        const msgFin = await mensajeFinPartido({ ...partido, goles1: g1, goles2: g2 })
+        await enviarAlGrupo(msgFin)
+        console.log(`🏁 FIN: ${partido.equipo1} ${g1}-${g2} ${partido.equipo2}`)
+        setTimeout(async () => {
+          try {
+            const board = await buildBoard()
+            const img   = await generarTablaImagen(board, 'oficial')
+            await enviarImagenAlGrupo(img, '🏆 TABLA ACTUALIZADA')
+          } catch(e) { console.error(e.message) }
+        }, 3000)
+      }
+    }
+  } catch (e) {
+    if (e.response?.status === 429) console.log('⚠ Rate limit API')
+    else console.error('Error polling:', e.message)
+  }
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>)
-</script></body></html>
+cron.schedule('*/2 * * * *', async () => {
+  if (new Date().getHours() >= 12) await verificarPartidosEnVivo()
+})
+
+// Cron 8am Argentina (11am UTC) — manda resumen del dia si hay partidos
+cron.schedule('0 11 * * *', async () => {
+  try {
+    const hoy = new Date().toISOString().slice(0, 10)
+    const { data: partidos } = await supabase.from('partidos').select('*').eq('fecha', hoy)
+    if (!partidos || partidos.length === 0) return
+    console.log('Enviando resumen del dia:', hoy)
+    const txt = await tablaDiaTexto(hoy)
+    await enviarAlGrupo(txt)
+  } catch(e) { console.error('Error cron 8am:', e.message) }
+})
+
+// ── Conexión WhatsApp (Baileys) ────────────────────────────
+async function conectarBot() {
+  const { state, saveCreds } = await useMultiFileAuthState('./auth_baileys')
+
+  // Obtener versión actual de WhatsApp Web (evita error 405)
+  let version = [2, 3000, 1015901307]
+  try {
+    const latest = await fetchLatestBaileysVersion()
+    version = latest.version
+    console.log(`📱 WA versión: ${version.join('.')}`)
+  } catch(e) {
+    console.log('⚠ No se pudo obtener versión WA, usando fallback')
+  }
+
+  const sock = makeWASocket({
+    version,
+    auth: state,
+    logger: pino({ level: 'silent' }),
+    browser: Browsers.macOS('Desktop'),
+    connectTimeoutMs: 60000,
+    defaultQueryTimeoutMs: undefined,
+  })
+
+  sock.ev.on('creds.update', saveCreds)
+
+  sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+    if (qr) {
+      ultimoQR = qr
+      console.log('\n=== QR disponible en: https://prode-server-2.onrender.com/qr ===\n')
+    }
+    if (connection === 'close') {
+      ultimoQR = null
+      botSock  = null
+      const code = new Boom(lastDisconnect?.error)?.output?.statusCode
+      console.log('Desconectado. Código:', code)
+      if (code === 405 || code === DisconnectReason.loggedOut) {
+        // Sesión inválida — limpiar credenciales para forzar QR nuevo
+        const fs = require('fs')
+        try { fs.rmSync('./auth_baileys', { recursive: true, force: true }); console.log('🗑 Credenciales limpiadas') } catch(e) {}
+        console.log('Reconectando para nuevo QR...')
+        setTimeout(conectarBot, 3000)
+      } else {
+        console.log('Reconectando en 5s...')
+        setTimeout(conectarBot, 5000)
+      }
+    } else if (connection === 'open') {
+      ultimoQR = null
+      botSock  = sock
+      console.log('✅ Bot conectado!')
+    }
+  })
+
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    if (type !== 'notify') return
+    for (const msg of messages) {
+      if (!msg.message) continue
+      if (msg.key.fromMe) continue
+      try { await handleMessage(sock, msg) } catch(e) { console.error('msg error:', e.message) }
+    }
+  })
+}
+
+// ── Endpoints HTTP ────────────────────────────────────────
+app.get('/qr', async (req, res) => {
+  if (!ultimoQR) {
+    return res.send(`<html><body style="background:#1a1a2e;color:white;font-family:sans-serif;text-align:center;padding:40px">
+      <h2>⚽ Prode Bot</h2><p>Bot ya conectado o QR no disponible aún.</p>
+      <p>Refrescá en 15 segundos.</p>
+      <script>setTimeout(()=>location.reload(),15000)</script></body></html>`)
+  }
+  try {
+    const imgUrl = await QRCode.toDataURL(ultimoQR, { width: 350 })
+    res.send(`<html><head><title>QR Prode Bot</title></head>
+      <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#1a1a2e;color:white;font-family:sans-serif;gap:16px;margin:0">
+        <h2 style="margin:0">⚽ Prode Bot — Vincular WhatsApp</h2>
+        <img src="${imgUrl}" style="border:8px solid white;border-radius:12px"/>
+        <p style="text-align:center;max-width:300px;color:#aaa">iPhone X: WhatsApp → Ajustes → Dispositivos vinculados → Vincular un dispositivo</p>
+        <p style="color:#f0c030;font-size:13px">El QR expira en ~60 segundos</p>
+        <button onclick="location.reload()" style="padding:10px 24px;background:#6a0dad;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold">🔄 Refrescar QR</button>
+        <script>setTimeout(()=>location.reload(),55000)</script>
+      </body></html>`)
+  } catch(e) { res.status(500).send('Error: ' + e.message) }
+})
+
+app.post('/admin/sync', async (req, res) => {
+  const { jugadores, pronosticos } = req.body
+  if (jugadores) await supabase.from('jugadores').upsert(jugadores)
+  if (pronosticos) {
+    for (const [jugadorId, preds] of Object.entries(pronosticos)) {
+      for (const [partidoId, pred] of Object.entries(preds)) {
+        if (pred?.s1 !== null && pred?.s2 !== null) {
+          await supabase.from('pronosticos').upsert({ jugador_id: jugadorId, partido_id: partidoId, goles1: pred.s1, goles2: pred.s2 })
+        }
+      }
+    }
+  }
+  res.json({ ok: true })
+})
+
+app.get('/', (req, res) => res.json({ status: 'ok', app: 'Prode Bot 2026 (Baileys)' }))
+
+// ── Arrancar ──────────────────────────────────────────────
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => console.log(`HTTP en puerto ${PORT}`))
+conectarBot().then(() => console.log('🚀 Iniciando conexión WhatsApp...')).catch(e => console.error('Error init:', e))
