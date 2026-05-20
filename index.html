@@ -238,7 +238,7 @@ function Admin(){
   const dbDeletePlayer=id=>{sb.from('jugadores').delete().eq('id',id).then();sb.from('pronosticos').delete().eq('jugador_id',id).then()}
   const dbSaveResult=async m=>{
     if(m.s1!==null&&m.s2!==null){
-      const {error}=await sb.from('partidos').upsert({id:m.id,goles1:m.s1,goles2:m.s2})
+      const {error}=await sb.from('partidos').update({goles1:m.s1,goles2:m.s2}).eq('id',m.id)
       if(error)console.error('dbSaveResult:',error)
     }else{
       const {error}=await sb.from('partidos').update({goles1:null,goles2:null}).eq('id',m.id)
