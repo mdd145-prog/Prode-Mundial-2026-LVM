@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Prode Mundial 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -20,7 +21,12 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect}=React
+const {useState,useEffect,useRef}=React
+
+// ── SUPABASE ──────────────────────────────────────────────
+const SUPA_URL='https://pgapjiunfbltefklhcwm.supabase.co'
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnYXBqaXVuZmJsdGVma2xoY3dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MDI2NjMsImV4cCI6MjA5NDQ3ODY2M30.CItmL-U--falj_ek-yVe_76c9ZSaWfJOUNpvIPRdAIA'
+const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY)
 
 // ── DATA ──────────────────────────────────────────────────
 const GRP={
@@ -38,91 +44,73 @@ const GRP={
   L:['Inglaterra','Croacia','Ghana','Panamá'],
 }
 
-// Fixture oficial FIFA - horarios en hora Argentina (ET+1h)
 const MATCHES=[
-  // Jueves 11 Jun
   {id:'m1', g:'A',t1:'México',          t2:'Sudáfrica',       s1:null,s2:null,date:'2026-06-11',time:'16:00'},
   {id:'m2', g:'A',t1:'Rep. de Corea',   t2:'Rep. Checa',      s1:null,s2:null,date:'2026-06-11',time:'23:00'},
-  // Viernes 12 Jun
   {id:'m3', g:'B',t1:'Canadá',          t2:'Bosnia Herz.',    s1:null,s2:null,date:'2026-06-12',time:'16:00'},
   {id:'m4', g:'D',t1:'Estados Unidos',  t2:'Paraguay',        s1:null,s2:null,date:'2026-06-12',time:'22:00'},
-  // Sábado 13 Jun
   {id:'m5', g:'B',t1:'Catar',           t2:'Suiza',           s1:null,s2:null,date:'2026-06-13',time:'16:00'},
   {id:'m6', g:'C',t1:'Brasil',          t2:'Marruecos',       s1:null,s2:null,date:'2026-06-13',time:'19:00'},
   {id:'m7', g:'C',t1:'Haití',           t2:'Escocia',         s1:null,s2:null,date:'2026-06-13',time:'22:00'},
   {id:'m8', g:'D',t1:'Australia',       t2:'Turquía',         s1:null,s2:null,date:'2026-06-14',time:'01:00'},
-  // Domingo 14 Jun
   {id:'m9', g:'E',t1:'Alemania',        t2:'Curazao',         s1:null,s2:null,date:'2026-06-14',time:'14:00'},
   {id:'m10',g:'F',t1:'Países Bajos',    t2:'Japón',           s1:null,s2:null,date:'2026-06-14',time:'17:00'},
   {id:'m11',g:'E',t1:'Costa de Marfil', t2:'Ecuador',         s1:null,s2:null,date:'2026-06-14',time:'20:00'},
   {id:'m12',g:'F',t1:'Suecia',          t2:'Túnez',           s1:null,s2:null,date:'2026-06-14',time:'23:00'},
-  // Lunes 15 Jun
   {id:'m13',g:'H',t1:'España',          t2:'Cabo Verde',      s1:null,s2:null,date:'2026-06-15',time:'13:00'},
   {id:'m14',g:'G',t1:'Bélgica',         t2:'Egipto',          s1:null,s2:null,date:'2026-06-15',time:'16:00'},
   {id:'m15',g:'H',t1:'Arabia Saudí',    t2:'Uruguay',         s1:null,s2:null,date:'2026-06-15',time:'19:00'},
   {id:'m16',g:'G',t1:'Irán',            t2:'Nueva Zelanda',   s1:null,s2:null,date:'2026-06-15',time:'22:00'},
-  // Martes 16 Jun
   {id:'m17',g:'I',t1:'Francia',         t2:'Senegal',         s1:null,s2:null,date:'2026-06-16',time:'16:00'},
   {id:'m18',g:'I',t1:'Irak',            t2:'Noruega',         s1:null,s2:null,date:'2026-06-16',time:'19:00'},
   {id:'m19',g:'J',t1:'Argentina',       t2:'Argelia',         s1:null,s2:null,date:'2026-06-16',time:'22:00'},
   {id:'m20',g:'J',t1:'Austria',         t2:'Jordania',        s1:null,s2:null,date:'2026-06-17',time:'01:00'},
-  // Miércoles 17 Jun
   {id:'m21',g:'K',t1:'Portugal',        t2:'RD Congo',        s1:null,s2:null,date:'2026-06-17',time:'14:00'},
   {id:'m22',g:'L',t1:'Inglaterra',      t2:'Croacia',         s1:null,s2:null,date:'2026-06-17',time:'17:00'},
   {id:'m23',g:'L',t1:'Ghana',           t2:'Panamá',          s1:null,s2:null,date:'2026-06-17',time:'20:00'},
   {id:'m24',g:'K',t1:'Uzbekistán',      t2:'Colombia',        s1:null,s2:null,date:'2026-06-17',time:'23:00'},
-  // Jueves 18 Jun
   {id:'m25',g:'A',t1:'Rep. Checa',      t2:'Sudáfrica',       s1:null,s2:null,date:'2026-06-18',time:'13:00'},
   {id:'m26',g:'B',t1:'Suiza',           t2:'Bosnia Herz.',    s1:null,s2:null,date:'2026-06-18',time:'16:00'},
   {id:'m27',g:'B',t1:'Canadá',          t2:'Catar',           s1:null,s2:null,date:'2026-06-18',time:'19:00'},
   {id:'m28',g:'A',t1:'México',          t2:'Rep. de Corea',   s1:null,s2:null,date:'2026-06-18',time:'22:00'},
-  // Viernes 19 Jun
   {id:'m29',g:'D',t1:'Estados Unidos',  t2:'Australia',       s1:null,s2:null,date:'2026-06-19',time:'16:00'},
   {id:'m30',g:'C',t1:'Escocia',         t2:'Marruecos',       s1:null,s2:null,date:'2026-06-19',time:'19:00'},
   {id:'m31',g:'C',t1:'Brasil',          t2:'Haití',           s1:null,s2:null,date:'2026-06-19',time:'22:00'},
   {id:'m32',g:'D',t1:'Turquía',         t2:'Paraguay',        s1:null,s2:null,date:'2026-06-20',time:'01:00'},
-  // Sábado 20 Jun
   {id:'m33',g:'F',t1:'Países Bajos',    t2:'Suecia',          s1:null,s2:null,date:'2026-06-20',time:'14:00'},
   {id:'m34',g:'E',t1:'Alemania',        t2:'Costa de Marfil', s1:null,s2:null,date:'2026-06-20',time:'17:00'},
   {id:'m35',g:'E',t1:'Ecuador',         t2:'Curazao',         s1:null,s2:null,date:'2026-06-20',time:'23:00'},
   {id:'m36',g:'F',t1:'Túnez',           t2:'Japón',           s1:null,s2:null,date:'2026-06-21',time:'01:00'},
-  // Domingo 21 Jun
   {id:'m37',g:'H',t1:'España',          t2:'Arabia Saudí',    s1:null,s2:null,date:'2026-06-21',time:'13:00'},
   {id:'m38',g:'G',t1:'Bélgica',         t2:'Irán',            s1:null,s2:null,date:'2026-06-21',time:'16:00'},
   {id:'m39',g:'H',t1:'Uruguay',         t2:'Cabo Verde',      s1:null,s2:null,date:'2026-06-21',time:'19:00'},
   {id:'m40',g:'G',t1:'Nueva Zelanda',   t2:'Egipto',          s1:null,s2:null,date:'2026-06-21',time:'22:00'},
-  // Lunes 22 Jun
   {id:'m41',g:'J',t1:'Argentina',       t2:'Austria',         s1:null,s2:null,date:'2026-06-22',time:'14:00'},
   {id:'m42',g:'I',t1:'Francia',         t2:'Irak',            s1:null,s2:null,date:'2026-06-22',time:'18:00'},
   {id:'m43',g:'I',t1:'Noruega',         t2:'Senegal',         s1:null,s2:null,date:'2026-06-22',time:'21:00'},
   {id:'m44',g:'J',t1:'Jordania',        t2:'Argelia',         s1:null,s2:null,date:'2026-06-23',time:'00:00'},
-  // Martes 23 Jun
   {id:'m45',g:'K',t1:'Portugal',        t2:'Uzbekistán',      s1:null,s2:null,date:'2026-06-23',time:'14:00'},
   {id:'m46',g:'L',t1:'Inglaterra',      t2:'Ghana',           s1:null,s2:null,date:'2026-06-23',time:'17:00'},
   {id:'m47',g:'L',t1:'Panamá',          t2:'Croacia',         s1:null,s2:null,date:'2026-06-23',time:'20:00'},
   {id:'m48',g:'K',t1:'Colombia',        t2:'RD Congo',        s1:null,s2:null,date:'2026-06-23',time:'23:00'},
-  // Miércoles 24 Jun
   {id:'m49',g:'B',t1:'Suiza',           t2:'Canadá',          s1:null,s2:null,date:'2026-06-24',time:'16:00'},
   {id:'m50',g:'B',t1:'Bosnia Herz.',    t2:'Catar',           s1:null,s2:null,date:'2026-06-24',time:'16:00'},
   {id:'m51',g:'C',t1:'Escocia',         t2:'Brasil',          s1:null,s2:null,date:'2026-06-24',time:'19:00'},
   {id:'m52',g:'C',t1:'Marruecos',       t2:'Haití',           s1:null,s2:null,date:'2026-06-24',time:'19:00'},
   {id:'m53',g:'A',t1:'Rep. Checa',      t2:'México',          s1:null,s2:null,date:'2026-06-24',time:'22:00'},
   {id:'m54',g:'A',t1:'Sudáfrica',       t2:'Rep. de Corea',   s1:null,s2:null,date:'2026-06-24',time:'22:00'},
-  // Jueves 25 Jun
   {id:'m55',g:'E',t1:'Curazao',         t2:'Costa de Marfil', s1:null,s2:null,date:'2026-06-25',time:'17:00'},
   {id:'m56',g:'E',t1:'Ecuador',         t2:'Alemania',        s1:null,s2:null,date:'2026-06-25',time:'17:00'},
   {id:'m57',g:'F',t1:'Japón',           t2:'Suecia',          s1:null,s2:null,date:'2026-06-25',time:'20:00'},
   {id:'m58',g:'F',t1:'Túnez',           t2:'Países Bajos',    s1:null,s2:null,date:'2026-06-25',time:'20:00'},
   {id:'m59',g:'D',t1:'Turquía',         t2:'Estados Unidos',  s1:null,s2:null,date:'2026-06-25',time:'23:00'},
   {id:'m60',g:'D',t1:'Paraguay',        t2:'Australia',       s1:null,s2:null,date:'2026-06-25',time:'23:00'},
-  // Viernes 26 Jun
   {id:'m61',g:'I',t1:'Noruega',         t2:'Francia',         s1:null,s2:null,date:'2026-06-26',time:'16:00'},
   {id:'m62',g:'I',t1:'Senegal',         t2:'Irak',            s1:null,s2:null,date:'2026-06-26',time:'16:00'},
   {id:'m63',g:'H',t1:'Cabo Verde',      t2:'Arabia Saudí',    s1:null,s2:null,date:'2026-06-26',time:'21:00'},
   {id:'m64',g:'H',t1:'Uruguay',         t2:'España',          s1:null,s2:null,date:'2026-06-26',time:'21:00'},
   {id:'m65',g:'G',t1:'Egipto',          t2:'Irán',            s1:null,s2:null,date:'2026-06-27',time:'00:00'},
   {id:'m66',g:'G',t1:'Nueva Zelanda',   t2:'Bélgica',         s1:null,s2:null,date:'2026-06-27',time:'00:00'},
-  // Sábado 27 Jun
   {id:'m67',g:'L',t1:'Panamá',          t2:'Inglaterra',      s1:null,s2:null,date:'2026-06-27',time:'18:00'},
   {id:'m68',g:'L',t1:'Croacia',         t2:'Ghana',           s1:null,s2:null,date:'2026-06-27',time:'18:00'},
   {id:'m69',g:'K',t1:'Colombia',        t2:'Portugal',        s1:null,s2:null,date:'2026-06-27',time:'20:30'},
@@ -133,7 +121,6 @@ const MATCHES=[
 
 const getMatchDate=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.date:null}
 const getMatchTime=mid=>{const m=MATCHES.find(x=>x.id===mid);return m?m.time:null}
-
 const tend=(a,b)=>a>b?1:a<b?-1:0
 const calcPts=(pred,match)=>{
   if(match.s1===null)return null
@@ -171,11 +158,11 @@ function simulateChances(pp,mm,rr){
   return board.map(p=>({...p,maxPossible:p.tot+rem,canWin:p.tot+rem>=top}))
 }
 
-// ── PDF: TABLA OFICIAL / NO OFICIAL ─────────────────────
+// ── PDF EXPORTS (sin cambios) ─────────────────────────────
 function exportPDF(board,oficial){
   const title=oficial?'TABLA OFICIAL':'TABLA NO OFICIAL'
-  const hdrColor=oficial?'#6a0dad':'#1a6b8a'   // purple vs teal-blue
-  const statsColor=oficial?'#27ae60':'#e67e22'  // green vs orange
+  const hdrColor=oficial?'#6a0dad':'#1a6b8a'
+  const statsColor=oficial?'#27ae60':'#e67e22'
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
   const rows=board.map((p,i)=>{
     const bg=i%2===0?'#d9d9d9':'#ffffff'
@@ -218,7 +205,6 @@ function exportPDF(board,oficial){
   w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},600)
 }
 
-// ── PDF: TODOS LOS PRONÓSTICOS ────────────────────────────
 function exportAllPredictions(pp,mm,rr){
   if(!pp.length){alert('No hay jugadores');return}
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
@@ -256,11 +242,8 @@ function exportAllPredictions(pp,mm,rr){
   w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},700)
 }
 
-// ── PDF: TABLA DEL DÍA ────────────────────────────────────
 function exportDayPDF(dayMatches,pp,rr,dayLabel){
   if(!dayMatches.length){alert('No hay partidos para esta fecha');return}
-  const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-  // Players as rows, matches as columns (max 4 matches per day)
   const mHeaders=dayMatches.map(m=>`<th style="background:#1a1a2e;color:white;padding:5px 3px;font-size:9px;writing-mode:vertical-lr;transform:rotate(180deg);min-width:46px;border:1px solid #555;line-height:1.2">${m.t1}<br/>vs<br/>${m.t2}</th>`).join('')
   const resRow=`<tr style="background:#f0e6ff">
     <td style="padding:4px 8px;font-weight:900;font-size:11px;color:#6a0dad;border:1px solid #ddd">RESULTADO REAL</td>
@@ -296,7 +279,7 @@ function exportDayPDF(dayMatches,pp,rr,dayLabel){
   w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},600)
 }
 
-// ── JUGADOR ───────────────────────────────────────────────
+// ── JUGADOR (sin cambios) ─────────────────────────────────
 function Jugador(){
   const LS2={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}}
   const [name,setName]=useState(()=>LS2.get('jug_name',''))
@@ -389,21 +372,18 @@ function Jugador(){
   )
 }
 
-// ── ADMIN ─────────────────────────────────────────────────
+// ── ADMIN (con Supabase) ──────────────────────────────────
 function Admin(){
-
   const [tab,setTab]=useState('tabla')
   const [pp,setPP]=useState(()=>LS.get('wc26p',[]))
   const [mm,setMM]=useState(()=>{
     const stored=LS.get('wc26m',null)
-    if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id) return MATCHES
+    if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id)return MATCHES
     return stored.map((s,i)=>({...MATCHES[i],s1:s.s1,s2:s.s2}))
   })
-  const [rr,setRR]=useState(()=>{
-    const stored=LS.get('wc26m',null)
-    if(!stored||stored.length!==MATCHES.length||stored[0]?.id!==MATCHES[0].id) return {}
-    return LS.get('wc26r',{})
-  })
+  const [rr,setRR]=useState(()=>LS.get('wc26r',{}))
+  const [loading,setLoading]=useState(true)
+  const [syncMsg,setSyncMsg]=useState('Cargando...')
   const [newN,setNewN]=useState('')
   const [selP,setSelP]=useState(null)
   const [pGrp,setPGrp]=useState('ALL')
@@ -414,22 +394,121 @@ function Admin(){
   const [dayFilter,setDayFilter]=useState('')
   const [simResult,setSimResult]=useState(null)
   const [tablaMode,setTablaMode]=useState(null)
-  const [dragIdx,setDragIdx]=useState(null)
   const [editingId,setEditingId]=useState(null)
-  const [editingName,setEditingName]=useState('') // null | 'oficial' | 'nooficial'
+  const [editingName,setEditingName]=useState('')
+  const rrRef=useRef(rr)
+  const mmRef=useRef(mm)
+  useEffect(()=>{rrRef.current=rr},[rr])
+  useEffect(()=>{mmRef.current=mm},[mm])
   const grps=Object.keys(GRP)
   const played=mm.filter(m=>m.s1!==null).length
   const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
+
+  // ── Local save (estado + LS) ──────────────────────────────
   const svP=p=>{setPP(p);LS.set('wc26p',p)}
-  const svM=m=>{setMM(m);LS.set('wc26m',m)}
+  const svM=m=>{setMM(m);LS.set('wc26m',m);setSimResult(null)}
   const svR=r=>{setRR(r);LS.set('wc26r',r)}
   const svAll=(p,m,r)=>{setPP(p);setMM(m);setRR(r);LS.set('wc26p',p);LS.set('wc26m',m);LS.set('wc26r',r)}
-  const board=buildBoard(pp,mm,rr)
-  const simBoard=simResult||board.map(p=>({...p,canWin:true}))
-  const dayMatches=(dayFilter?mm.filter(m=>getMatchDate(m.id)===dayFilter):[...mm].filter(m=>m.s1!==null).sort((a,b)=>a.date?.localeCompare(b.date)||0).slice(-4)).sort((a,b)=>(a.time||'').localeCompare(b.time||'')||0)
-  const dayLabel=dayFilter?fmtDate(dayFilter):'Últimos resultados'
 
-  const doImport=()=>{
+  // ── Supabase helpers ──────────────────────────────────────
+  const dbSavePlayers=ps=>sb.from('jugadores').upsert(ps.map((p,i)=>({id:p.id,nombre:p.name,orden:i}))).then(({error})=>{if(error)console.error('dbSavePlayers:',error)})
+  const dbDeletePlayer=id=>{
+    sb.from('jugadores').delete().eq('id',id).then()
+    sb.from('pronosticos').delete().eq('jugador_id',id).then()
+  }
+  const dbSaveResult=m=>{
+    if(m.s1!==null&&m.s2!==null){
+      sb.from('partidos').upsert({id:m.id,goles1:m.s1,goles2:m.s2}).then(({error})=>{if(error)console.error('dbSaveResult:',error)})
+    }else{
+      sb.from('partidos').update({goles1:null,goles2:null}).eq('id',m.id).then(({error})=>{if(error)console.error('dbClearResult:',error)})
+    }
+  }
+  const dbSavePred=(jugId,midId)=>{
+    const pred=(rrRef.current[jugId]||{})[midId]
+    if(pred&&pred.s1!==null&&pred.s2!==null){
+      sb.from('pronosticos').upsert({jugador_id:jugId,partido_id:midId,goles1:pred.s1,goles2:pred.s2},{onConflict:'jugador_id,partido_id'}).then(({error})=>{if(error){
+        // fallback: delete then insert
+        sb.from('pronosticos').delete().match({jugador_id:jugId,partido_id:midId}).then(()=>{
+          sb.from('pronosticos').insert({jugador_id:jugId,partido_id:midId,goles1:pred.s1,goles2:pred.s2}).then()
+        })
+      }})
+    }
+  }
+  const dbSavePlayerPreds=async(jugId,preds)=>{
+    const rows=Object.entries(preds).filter(([,p])=>p&&p.s1!==null&&p.s2!==null).map(([mid,p])=>({jugador_id:jugId,partido_id:mid,goles1:p.s1,goles2:p.s2}))
+    if(!rows.length)return
+    await sb.from('pronosticos').delete().eq('jugador_id',jugId)
+    await sb.from('pronosticos').insert(rows)
+  }
+
+  // ── Seed partidos (primera vez) ───────────────────────────
+  const seedPartidos=async()=>{
+    const rows=MATCHES.map(m=>({id:m.id,grupo:m.g,equipo1:m.t1,equipo2:m.t2,goles1:null,goles2:null,fecha:m.date,hora:m.time}))
+    const {error}=await sb.from('partidos').upsert(rows)
+    if(error)console.error('seedPartidos:',error)
+    else console.log('Partidos seeded OK')
+  }
+
+  // ── Carga inicial desde Supabase ──────────────────────────
+  useEffect(()=>{
+    const init=async()=>{
+      try{
+        const [{data:jData},{data:pData},{data:prData}]=await Promise.all([
+          sb.from('jugadores').select('*').order('orden'),
+          sb.from('partidos').select('id,goles1,goles2'),
+          sb.from('pronosticos').select('*')
+        ])
+        if(jData?.length>0){
+          const loaded=jData.map(j=>({id:j.id,name:j.nombre,orden:j.orden}))
+          setPP(loaded);LS.set('wc26p',loaded)
+        }
+        if(!pData||pData.length===0){
+          await seedPartidos()
+        }else{
+          const newMM=MATCHES.map(m=>{const db=pData.find(p=>p.id===m.id);return{...m,s1:db?.goles1??null,s2:db?.goles2??null}})
+          setMM(newMM);LS.set('wc26m',newMM)
+        }
+        if(prData?.length>0){
+          const loaded={}
+          prData.forEach(p=>{if(!loaded[p.jugador_id])loaded[p.jugador_id]={};loaded[p.jugador_id][p.partido_id]={s1:p.goles1,s2:p.goles2}})
+          setRR(loaded);LS.set('wc26r',loaded)
+        }
+        setSyncMsg('✓ Sincronizado')
+      }catch(e){
+        console.error('Init error:',e)
+        setSyncMsg('⚠ Sin conexión')
+      }
+      setLoading(false)
+    }
+    init()
+  },[])
+
+  // ── Refresco automático cada 30s (resultados del bot) ─────
+  useEffect(()=>{
+    const interval=setInterval(async()=>{
+      try{
+        const {data:pData}=await sb.from('partidos').select('id,goles1,goles2')
+        if(pData){
+          setMM(prev=>{
+            const updated=prev.map(m=>{
+              const db=pData.find(p=>p.id===m.id)
+              if(!db)return m
+              const ns1=db.goles1??null,ns2=db.goles2??null
+              return(ns1!==m.s1||ns2!==m.s2)?{...m,s1:ns1,s2:ns2}:m
+            })
+            LS.set('wc26m',updated)
+            return updated
+          })
+          const t=new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})
+          setSyncMsg(`✓ ${t}`)
+        }
+      }catch(e){setSyncMsg('⚠ Sin conexión')}
+    },30000)
+    return()=>clearInterval(interval)
+  },[])
+
+  // ── Import pronósticos ────────────────────────────────────
+  const doImport=async()=>{
     setImportLog(null)
     const line=importTxt.trim().split('\n').map(l=>l.trim()).find(l=>l.startsWith('PRODE26|'))
     if(!line){setImportLog({ok:false,msg:'Código no reconocido.'});return}
@@ -456,12 +535,32 @@ function Admin(){
     setImportTxt('');setSimResult(null)
     setImportLog({ok:true,msg:`✅ ${pName}: ${loaded} pronósticos${skipped>0?`, ${skipped} vacíos`:''}.`})
     showToast(`✓ ${pName}`)
+    // Guardar en Supabase
+    try{
+      await sb.from('jugadores').upsert({id:player.id,nombre:player.name,orden:newPP.findIndex(p=>p.id===player.id)})
+      if(newPP.length>pp.length) await dbSavePlayers(newPP)
+      await dbSavePlayerPreds(player.id,newPreds)
+    }catch(e){console.error('Import SB:',e)}
   }
+
+  const board=buildBoard(pp,mm,rr)
+  const simBoard=simResult||board.map(p=>({...p,canWin:true}))
+  const dayMatches=(dayFilter?mm.filter(m=>getMatchDate(m.id)===dayFilter):[...mm].filter(m=>m.s1!==null).sort((a,b)=>a.date?.localeCompare(b.date)||0).slice(-4)).sort((a,b)=>(a.time||'').localeCompare(b.time||'')||0)
+  const dayLabel=dayFilter?fmtDate(dayFilter):'Últimos resultados'
 
   const si={width:36,textAlign:'center',background:'#e8f0fe',border:'1px solid #333',borderRadius:6,color:'white',fontSize:16,fontWeight:700,padding:'4px 2px',outline:'none'}
   const pill=a=>({padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:a?'#6a0dad':'#ebebeb',color:a?'white':'#555'})
 
-
+  // ── Pantalla de carga ─────────────────────────────────────
+  if(loading)return(
+    <div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20}}>
+      <div style={{fontSize:48}}>⚽</div>
+      <div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>Prode Mundial 2026</div>
+      <div style={{fontSize:14,color:'#888'}}>Cargando datos...</div>
+      <div style={{width:48,height:48,border:'4px solid #333',borderTop:'4px solid #6a0dad',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
 
   return(
     <div style={{minHeight:'100vh',background:'#f0f2f5',color:'white',maxWidth:430,margin:'0 auto',paddingBottom:72}}>
@@ -469,7 +568,7 @@ function Admin(){
 
       <div style={{background:'linear-gradient(135deg,#6a0dad,#4a0090)',padding:'12px 16px 10px',textAlign:'center',position:'sticky',top:0,zIndex:50,borderBottom:'1px solid #1a2a4a'}}>
         <div style={{fontSize:16,fontWeight:800,color:'#f0c030',letterSpacing:1}}>⚽ PRODE 2026 — ADMIN</div>
-        <div style={{fontSize:10,color:'#888',marginTop:1}}>{played}/72 partidos · Exacto 3pts · Levante 1pt</div>
+        <div style={{fontSize:10,color:'#aaa',marginTop:1}}>{played}/72 partidos · {syncMsg}</div>
       </div>
 
       {/* ══ TABLA ══ */}
@@ -482,7 +581,6 @@ function Admin(){
         const rowOdd=modo==='oficial'?'#f5ecff':modo==='nooficial'?'#e8f4fb':'#f7f8fa'
         return(
         <div style={{padding:'10px 10px 0'}}>
-          {/* Botones modo */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
             <button onClick={()=>setTablaMode(modo==='oficial'?null:'oficial')}
               style={{padding:'10px',background:modo==='oficial'?'#6a0dad':'#2a1a3a',border:`2px solid ${modo==='oficial'?'#a64dff':'#3a2a4a'}`,borderRadius:10,color:'white',fontWeight:800,fontSize:13,cursor:'pointer'}}>
@@ -493,20 +591,16 @@ function Admin(){
               📄 No Oficial
             </button>
           </div>
-
-          {/* TABLA VISUAL */}
           {board.length===0?(
             <div style={{textAlign:'center',color:'#888',padding:'50px 0'}}><div style={{fontSize:48}}>🏆</div><div style={{fontSize:13,marginTop:10}}>Sin datos. Importá pronósticos.</div></div>
           ):(
             <div style={{borderRadius:10,overflow:'hidden',border:`1px solid ${modo?hdrBg:'#2a2a3a'}`}}>
-              {/* Título si hay modo */}
               {titulo&&(
                 <div style={{display:'flex',background:hdrBg}}>
                   <div style={{flex:1,padding:'9px 12px',fontSize:14,fontWeight:900,color:'white',letterSpacing:1}}>{titulo}</div>
                   <div style={{background:statsBg,padding:'9px 12px',fontSize:10,fontWeight:700,color:'white',display:'flex',alignItems:'center',letterSpacing:1}}>RESULTADOS</div>
                 </div>
               )}
-              {/* Header columnas */}
               <div style={{display:'flex',background:hdrBg,padding:'6px 0',borderTop:titulo?'1px solid rgba(255,255,255,0.1)':'none'}}>
                 <div style={{width:32,textAlign:'center',fontSize:10,fontWeight:700,color:'white'}}>POS</div>
                 <div style={{flex:1,fontSize:10,fontWeight:700,color:'white',paddingLeft:6}}>JUGADOR</div>
@@ -556,17 +650,13 @@ function Admin(){
               📲 Exportar tabla del día (PDF)
             </button>
           </div>
-
-          {/* Visual table for screenshot: players as rows, matches as columns */}
           {dayMatches.length===0?(
             <div style={{textAlign:'center',color:'#999',padding:30}}>No hay partidos para esta fecha</div>
           ):(
             <div style={{borderRadius:12,overflow:'hidden',border:'1px solid #dde3ec',boxShadow:'0 2px 8px rgba(106,13,173,0.08)'}}>
-              {/* Título fecha */}
               <div style={{background:'#6a0dad',padding:'10px 14px',textAlign:'center',fontSize:15,fontWeight:900,color:'white',letterSpacing:2}}>
                 ⚽ {dayLabel.toUpperCase()}
               </div>
-              {/* Header columnas */}
               <div style={{display:'flex',background:'#f3eeff',borderBottom:'2px solid #c9a0f0'}}>
                 <div style={{width:120,flexShrink:0,padding:'8px 10px',fontSize:10,fontWeight:800,color:'#6a0dad',borderRight:'2px solid #c9a0f0'}}>JUGADOR</div>
                 {dayMatches.map(m=>(
@@ -578,7 +668,6 @@ function Admin(){
                   </div>
                 ))}
               </div>
-              {/* Filas jugadores */}
               {pp.map((p,i)=>{
                 const rowBg=i%2===0?'#ffffff':'#faf7ff'
                 return(
@@ -601,7 +690,6 @@ function Admin(){
                   </div>
                 )
               })}
-              {/* Leyenda */}
               <div style={{background:'#f9f6ff',padding:'7px',display:'flex',justifyContent:'center',gap:16,fontSize:10,borderTop:'1px solid #ede8f7'}}>
                 <span style={{color:'#1e8449',fontWeight:700}}>● Exacto +3</span>
                 <span style={{color:'#935116',fontWeight:700}}>● Levante +1</span>
@@ -615,11 +703,10 @@ function Admin(){
       {/* ══ DATOS ══ */}
       {tab==='datos'&&(
         <div style={{padding:'10px 10px 0'}}>
-          {/* BACKUP / RESTORE */}
           <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e67e22'}}>
             <div style={{fontSize:13,fontWeight:800,color:'#e67e22',marginBottom:8}}>💾 Backup de datos</div>
             <div style={{fontSize:11,color:'#888',marginBottom:10,lineHeight:1.6}}>
-              iOS borra los datos si no usás la app varios días. Guardá el backup en tu app <b style={{color:'#fff'}}>Archivos</b> y restauralo cuando sea necesario.
+              Guardá el backup como respaldo. Al restaurar, los datos también se sincronizan a Supabase.
             </div>
             <div style={{display:'flex',gap:8}}>
               <button onClick={()=>{
@@ -639,15 +726,27 @@ function Admin(){
                 ⬆️ Restaurar
                 <input type="file" accept=".json" style={{display:'none'}} onChange={e=>{
                   const file=e.target.files?.[0]
-                  if(!file) return
+                  if(!file)return
                   const reader=new FileReader()
-                  reader.onload=ev=>{
+                  reader.onload=async ev=>{
                     try{
                       const d=JSON.parse(ev.target.result)
                       if(!d.pp||!d.mm||!d.rr){showToast('Archivo inválido','#e74c3c');return}
                       svAll(d.pp,d.mm,d.rr)
-                      showToast(`✓ Datos restaurados (${d.pp.length} jugadores)`)
+                      showToast(`✓ Restaurado (${d.pp.length} jugadores) — sincronizando...`)
                       e.target.value=''
+                      // Sync to Supabase
+                      try{
+                        await dbSavePlayers(d.pp)
+                        const resultsToSave=d.mm.filter(m=>m.s1!==null)
+                        if(resultsToSave.length){
+                          await sb.from('partidos').upsert(resultsToSave.map(m=>({id:m.id,goles1:m.s1,goles2:m.s2})))
+                        }
+                        for(const p of d.pp){
+                          await dbSavePlayerPreds(p.id,d.rr[p.id]||{})
+                        }
+                        showToast('✓ Sincronizado con Supabase')
+                      }catch(err){console.error('Restore SB:',err);showToast('Restaurado local. Error en Supabase.','#e67e22')}
                     }catch{showToast('Error al leer el archivo','#e74c3c')}
                   }
                   reader.readAsText(file)
@@ -655,27 +754,17 @@ function Admin(){
               </label>
             </div>
           </div>
-
-          <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #e0e4ea'}}>
-            <div style={{fontSize:15,fontWeight:700,color:'#f0c030',marginBottom:4}}>📊 Herramientas</div>
-          </div>
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
             <button onClick={()=>exportAllPredictions(pp,mm,rr)}
               style={{padding:'14px',background:'#8e44ad',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}>
               <span style={{fontSize:24}}>📋</span>
-              <div>
-                <div style={{fontWeight:800}}>Todos los pronósticos</div>
-                <div style={{fontSize:11,opacity:0.7,marginTop:2}}>Exporta PDF con todos los grupos y jugadores</div>
-              </div>
+              <div><div style={{fontWeight:800}}>Todos los pronósticos</div><div style={{fontSize:11,opacity:0.7,marginTop:2}}>PDF con todos los grupos y jugadores</div></div>
             </button>
             <div style={{background:'#ffffff',borderRadius:10,border:'1px solid #e0e4ea',overflow:'hidden'}}>
               <button onClick={()=>{setSimResult(simulateChances(pp,mm,rr));showToast('✓ Simulación activa')}}
                 style={{width:'100%',padding:'14px',background:'transparent',border:'none',color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}>
                 <span style={{fontSize:24}}>🎲</span>
-                <div>
-                  <div style={{fontWeight:800}}>Simular chances</div>
-                  <div style={{fontSize:11,color:'#888',marginTop:2}}>Ver quién puede ganar según los puntos restantes</div>
-                </div>
+                <div><div style={{fontWeight:800}}>Simular chances</div><div style={{fontSize:11,color:'#888',marginTop:2}}>Ver quién puede ganar</div></div>
               </button>
               {simResult&&(
                 <div style={{padding:'0 12px 12px'}}>
@@ -697,18 +786,12 @@ function Admin(){
             <button onClick={()=>exportPDF(board,true)}
               style={{padding:'14px',background:'#2a1a3a',border:'2px solid #6a0dad',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}>
               <span style={{fontSize:24}}>📄</span>
-              <div>
-                <div style={{fontWeight:800}}>Exportar PDF Oficial</div>
-                <div style={{fontSize:11,color:'#a64dff',marginTop:2}}>Para imprimir o guardar</div>
-              </div>
+              <div><div style={{fontWeight:800}}>PDF Tabla Oficial</div><div style={{fontSize:11,color:'#a64dff',marginTop:2}}>Para imprimir o guardar</div></div>
             </button>
             <button onClick={()=>exportPDF(board,false)}
               style={{padding:'14px',background:'#0a1a2a',border:'2px solid #1a6b8a',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}>
               <span style={{fontSize:24}}>📄</span>
-              <div>
-                <div style={{fontWeight:800}}>Exportar PDF No Oficial</div>
-                <div style={{fontSize:11,color:'#2eafd4',marginTop:2}}>Para imprimir o guardar</div>
-              </div>
+              <div><div style={{fontWeight:800}}>PDF Tabla No Oficial</div><div style={{fontSize:11,color:'#2eafd4',marginTop:2}}>Para imprimir o guardar</div></div>
             </button>
           </div>
         </div>
@@ -735,9 +818,9 @@ function Admin(){
             <div style={{fontSize:15,fontWeight:700,color:'#6a0dad',marginBottom:8}}>👥 Jugadores ({pp.length}/50)</div>
             <div style={{display:'flex',gap:6}}>
               <input value={newN} onChange={e=>setNewN(e.target.value)}
-                onKeyDown={e=>{if(e.key==='Enter'&&newN.trim()&&pp.length<50){svP([...pp,{id:`p${Date.now()}`,name:newN.trim()}]);setNewN('');showToast('✓ Agregado')}}}
+                onKeyDown={e=>{if(e.key==='Enter'&&newN.trim()&&pp.length<50){const newPP=[...pp,{id:`p${Date.now()}`,name:newN.trim()}];svP(newPP);dbSavePlayers(newPP);setNewN('');showToast('✓ Agregado')}}}
                 placeholder="Nombre" style={{flex:1,padding:'8px 10px',borderRadius:8,border:'1px solid #e0e4ea',background:'#f4f5f7',color:'#1a1a2e',fontSize:14,outline:'none'}}/>
-              <button onClick={()=>{if(!newN.trim()||pp.length>=50)return;svP([...pp,{id:`p${Date.now()}`,name:newN.trim()}]);setNewN('');showToast('✓ Agregado')}}
+              <button onClick={()=>{if(!newN.trim()||pp.length>=50)return;const newPP=[...pp,{id:`p${Date.now()}`,name:newN.trim()}];svP(newPP);dbSavePlayers(newPP);setNewN('');showToast('✓ Agregado')}}
                 style={{padding:'8px 14px',background:pp.length>=50||!newN.trim()?'#ccc':'#6a0dad',color:'white',borderRadius:8,fontWeight:700,border:'none',cursor:'pointer',fontSize:15}}>+</button>
             </div>
             <div style={{fontSize:11,color:'#aaa',marginTop:8}}>▲▼ para reordenar · tocá el nombre para editar</div>
@@ -745,8 +828,8 @@ function Admin(){
           {pp.map((p,i)=>{
             const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length
             const isEditing=editingId===p.id
-            const moveUp=()=>{if(i===0)return;const r=[...pp];[r[i-1],r[i]]=[r[i],r[i-1]];svP(r)}
-            const moveDown=()=>{if(i===pp.length-1)return;const r=[...pp];[r[i],r[i+1]]=[r[i+1],r[i]];svP(r)}
+            const moveUp=()=>{if(i===0)return;const r=[...pp];[r[i-1],r[i]]=[r[i],r[i-1]];svP(r);dbSavePlayers(r)}
+            const moveDown=()=>{if(i===pp.length-1)return;const r=[...pp];[r[i],r[i+1]]=[r[i+1],r[i]];svP(r);dbSavePlayers(r)}
             return(
               <div key={p.id} style={{background:'white',borderRadius:8,padding:'9px 12px',marginBottom:5,border:'1px solid #e0e4ea'}}>
                 <div style={{display:'flex',alignItems:'center',gap:6}}>
@@ -757,8 +840,8 @@ function Admin(){
                   <div style={{width:22,height:22,borderRadius:'50%',background:'#ede9f7',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#6a0dad',fontWeight:700,flexShrink:0}}>{i+1}</div>
                   {isEditing?(
                     <input autoFocus value={editingName} onChange={e=>setEditingName(e.target.value)}
-                      onBlur={()=>{if(editingName.trim())svP(pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x));setEditingId(null)}}
-                      onKeyDown={e=>{if(e.key==='Enter'){if(editingName.trim())svP(pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x));setEditingId(null)}if(e.key==='Escape')setEditingId(null)}}
+                      onBlur={()=>{if(editingName.trim()){const newPP=pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x);svP(newPP);dbSavePlayers(newPP)};setEditingId(null)}}
+                      onKeyDown={e=>{if(e.key==='Enter'){if(editingName.trim()){const newPP=pp.map(x=>x.id===p.id?{...x,name:editingName.trim()}:x);svP(newPP);dbSavePlayers(newPP)};setEditingId(null)}if(e.key==='Escape')setEditingId(null)}}
                       style={{flex:1,fontSize:14,color:'#1a1a2e',border:'2px solid #6a0dad',borderRadius:6,padding:'4px 8px',outline:'none'}}/>
                   ):(
                     <span onClick={()=>{setEditingId(p.id);setEditingName(p.name)}} style={{flex:1,fontSize:14,color:'#1a1a2e',cursor:'pointer'}}>
@@ -766,7 +849,7 @@ function Admin(){
                     </span>
                   )}
                   <span style={{fontSize:10,color:done===72?'#27ae60':done>0?'#6a0dad':'#ccc',flexShrink:0}}>{done}/72</span>
-                  <button onClick={()=>{const r2={...rr};delete r2[p.id];svAll(pp.filter(x=>x.id!==p.id),mm,r2);setSimResult(null);showToast('Eliminado','#e74c3c')}}
+                  <button onClick={()=>{const r2={...rr};delete r2[p.id];const newPP=pp.filter(x=>x.id!==p.id);svAll(newPP,mm,r2);setSimResult(null);dbDeletePlayer(p.id);showToast('Eliminado','#e74c3c')}}
                     style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:20,lineHeight:1,padding:'0 2px',flexShrink:0}}>×</button>
                 </div>
                 <div style={{marginTop:5,background:'#f0f2f5',borderRadius:3,height:3,marginLeft:62}}>
@@ -827,9 +910,15 @@ function Admin(){
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span>
-                    <input type="number" value={pred?.s1??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})} style={si}/>
+                    <input type="number" value={pred?.s1??''} min="0" max="20"
+                      onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})}
+                      onBlur={()=>dbSavePred(selP.id,m.id)}
+                      style={si}/>
                     <span style={{color:'#aaa',fontWeight:700}}>-</span>
-                    <input type="number" value={pred?.s2??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})} style={si}/>
+                    <input type="number" value={pred?.s2??''} min="0" max="20"
+                      onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})}
+                      onBlur={()=>dbSavePred(selP.id,m.id)}
+                      style={si}/>
                     <span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span>
                   </div>
                 </div>
@@ -857,17 +946,19 @@ function Admin(){
                   <span style={{fontSize:9,background:'#ede9f7',color:'#6a0dad',padding:'2px 6px',borderRadius:4,fontWeight:700}}>Jornada {jornada}</span>
                   <span style={{fontSize:10,color:'#888'}}>📅 {mDate?fmtDate(mDate):''}{getMatchTime(m.id)?' · ⏰ '+getMatchTime(m.id)+'hs':''}</span>
                   {m.s1!==null&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:'auto'}}>✓ {m.s1}-{m.s2}</span>}
-                  {m.s1!==null&&<button onClick={()=>{svM(mm.map(x=>x.id===m.id?{...x,s1:null,s2:null}:x));setSimResult(null);showToast('Borrado','#e74c3c')}} style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:11,padding:0}}>✕</button>}
+                  {m.s1!==null&&<button onClick={()=>{const newMM=mm.map(x=>x.id===m.id?{...x,s1:null,s2:null}:x);svM(newMM);dbSaveResult({...m,s1:null,s2:null});showToast('Borrado','#e74c3c')}} style={{background:'transparent',border:'none',color:'#e74c3c',cursor:'pointer',fontSize:11,padding:0}}>✕</button>}
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                   <span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span>
                   <input type="number" value={m.s1??''} min="0" max="20"
-                    onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s1:v}:x));setSimResult(null)}}
-                    onBlur={()=>{if(m.s1!==null&&m.s2!==null)showToast('✓ Guardado')}} style={si}/>
+                    onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s1:v}:x))}}
+                    onBlur={()=>{const cur=mmRef.current.find(x=>x.id===m.id);if(cur?.s1!==null&&cur?.s2!==null){dbSaveResult(cur);showToast('✓ Guardado')}}}
+                    style={si}/>
                   <span style={{color:'#aaa',fontWeight:700}}>-</span>
                   <input type="number" value={m.s2??''} min="0" max="20"
-                    onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s2:v}:x));setSimResult(null)}}
-                    onBlur={()=>{if(m.s1!==null&&m.s2!==null)showToast('✓ Guardado')}} style={si}/>
+                    onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s2:v}:x))}}
+                    onBlur={()=>{const cur=mmRef.current.find(x=>x.id===m.id);if(cur?.s1!==null&&cur?.s2!==null){dbSaveResult(cur);showToast('✓ Guardado')}}}
+                    style={si}/>
                   <span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span>
                 </div>
               </div>
@@ -892,7 +983,34 @@ function Admin(){
 function App(){
   const [hash,setHash]=useState(window.location.hash)
   useEffect(()=>{const h=()=>setHash(window.location.hash);window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h)},[])
-  return hash==='#admin'?<Admin/>:<Jugador/>
+  if(hash==='#admin'){
+    const stored=localStorage.getItem('wc26_pin_ok')
+    if(stored==='yes')return <Admin/>
+    return <PinGate/>
+  }
+  return <Jugador/>
 }
+
+function PinGate(){
+  const [pin,setPin]=useState('')
+  const [err,setErr]=useState(false)
+  const check=()=>{
+    if(pin==='2026'){localStorage.setItem('wc26_pin_ok','yes');window.location.reload()}
+    else{setErr(true);setTimeout(()=>setErr(false),1500)}
+  }
+  return(
+    <div style={{minHeight:'100vh',background:'#1a1a2e',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,padding:20}}>
+      <div style={{fontSize:48}}>🔐</div>
+      <div style={{fontSize:20,fontWeight:800,color:'#f0c030'}}>Acceso Admin</div>
+      <input type="password" value={pin} onChange={e=>setPin(e.target.value)}
+        onKeyDown={e=>e.key==='Enter'&&check()}
+        placeholder="PIN"
+        style={{padding:'12px 20px',fontSize:22,borderRadius:12,border:`2px solid ${err?'#e74c3c':'#6a0dad'}`,background:'#2a2a3e',color:'white',textAlign:'center',outline:'none',width:160,letterSpacing:8}}/>
+      {err&&<div style={{color:'#e74c3c',fontSize:13}}>PIN incorrecto</div>}
+      <button onClick={check} style={{padding:'12px 32px',background:'#6a0dad',border:'none',borderRadius:12,color:'white',fontWeight:800,fontSize:16,cursor:'pointer'}}>Entrar</button>
+    </div>
+  )
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>)
 </script></body></html>
