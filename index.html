@@ -250,14 +250,18 @@ function Admin(){
   const seedPartidos=async()=>{const rows=MATCHES.map(m=>({id:m.id,grupo:m.g,equipo1:m.t1,equipo2:m.t2,goles1:null,goles2:null,fecha:m.date,hora:m.time}));await sb.from('partidos').upsert(rows)}
 
   // Debounced result save — fix para que no se borre al refrescar
-  const debounceSaveResult=(matchId)=>{
-    clearTimeout(saveTimer.current[matchId])
-    saveTimer.current[matchId]=setTimeout(async()=>{
-      const cur=mmRef.current.find(x=>x.id===matchId)
-      if(!cur)return
-      await dbSaveResult(cur)
-      if(cur.s1!==null&&cur.s2!==null)showToast('✓ Guardado')
-    },600)
+  const debounceSaveResult=(matchId,newMM)=>{
+    const cur=(newMM||mmRef.current).find(x=>x.id===matchId)
+    if(!cur)return
+    // Si los dos goles están completos, guardar inmediatamente
+    if(cur.s1!==null&&cur.s2!==null){
+      clearTimeout(saveTimer.current[matchId])
+      saveTimer.current[matchId]=true // bloquear refresh
+      dbSaveResult(cur).then(()=>{
+        saveTimer.current[matchId]=null
+        showToast('✓ Guardado')
+      })
+    }
   }
 
   useEffect(()=>{
@@ -455,11 +459,11 @@ function Admin(){
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span>
               <input type="number" value={m.s1??''} min="0" max="20"
-                onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s1:v}:x));debounceSaveResult(m.id)}}
+                onChange={e=>{const v=toNum(e.target.value);const nm=mm.map(x=>x.id===m.id?{...x,s1:v}:x);svM(nm);debounceSaveResult(m.id,nm)}}
                 style={si}/>
               <span style={{color:'#aaa',fontWeight:700}}>-</span>
               <input type="number" value={m.s2??''} min="0" max="20"
-                onChange={e=>{const v=toNum(e.target.value);svM(mm.map(x=>x.id===m.id?{...x,s2:v}:x));debounceSaveResult(m.id)}}
+                onChange={e=>{const v=toNum(e.target.value);const nm=mm.map(x=>x.id===m.id?{...x,s2:v}:x);svM(nm);debounceSaveResult(m.id,nm)}}
                 style={si}/>
               <span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span>
             </div>
