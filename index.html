@@ -158,14 +158,39 @@ function exportPDF(board,oficial){
 function exportAllPredictions(pp,mm,rr){
   if(!pp.length){alert('No hay jugadores');return}
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-  const grpSections=Object.keys(GRP).map(g=>{
-    const gm=mm.filter(m=>m.g===g)
-    const pHeaders=pp.map(p=>`<th style="background:#1a1a2e;color:white;padding:2px;font-size:8px;writing-mode:vertical-lr;transform:rotate(180deg);min-width:26px;border:1px solid #555">${p.name.length>9?p.name.slice(0,9)+'…':p.name}</th>`).join('')
-    const rows=gm.map(m=>{const cells=pp.map(p=>{const pred=(rr[p.id]||{})[m.id];const txt=(pred&&pred.s1!==null&&pred.s2!==null)?`${pred.s1}-${pred.s2}`:'-';return `<td style="text-align:center;font-size:9px;padding:3px 1px;border:1px solid #ddd;font-weight:${txt!=='-'?700:400};color:${txt!=='-'?'#000':'#bbb'}">${txt}</td>`}).join('');return `<tr style="background:white"><td style="padding:3px 8px;font-size:9px;font-weight:700;border:1px solid #ddd;white-space:nowrap">${m.t1} vs ${m.t2}</td>${cells}</tr>`}).join('')
-    return `<div style="margin-bottom:14px;break-inside:avoid"><div style="background:#6a0dad;color:white;padding:5px 10px;font-size:11px;font-weight:900">GRUPO ${g}</div><table style="width:100%;border-collapse:collapse"><tr><th style="background:#1a1a2e;color:white;padding:5px 8px;text-align:left;font-size:9px;border:1px solid #555;min-width:140px">PARTIDO</th>${pHeaders}</tr>${rows}</table></div>`
+  const AB={'México':'MEX','Sudáfrica':'RSA','Rep. de Corea':'KOR','Rep. Checa':'CHE','Canadá':'CAN','Bosnia Herz.':'BIH','Catar':'QAT','Suiza':'SUI','Brasil':'BRA','Marruecos':'MAR','Haití':'HAI','Escocia':'SCO','Estados Unidos':'USA','Paraguay':'PAR','Australia':'AUS','Turquía':'TUR','Alemania':'ALE','Curazao':'CUW','Costa de Marfil':'CIV','Ecuador':'ECU','Países Bajos':'HOL','Japón':'JPN','Suecia':'SUE','Túnez':'TUN','Bélgica':'BEL','Egipto':'EGI','Irán':'IRN','Nueva Zelanda':'NZL','España':'ESP','Cabo Verde':'CPV','Arabia Saudí':'KSA','Uruguay':'URU','Francia':'FRA','Senegal':'SEN','Noruega':'NOR','Irak':'IRQ','Argentina':'ARG','Argelia':'ALG','Austria':'AUT','Jordania':'JOR','Portugal':'POR','Colombia':'COL','Uzbekistán':'UZB','RD Congo':'COD','Inglaterra':'ING','Croacia':'CRO','Ghana':'GHA','Panamá':'PAN'}
+  const ab=n=>AB[n]||n.slice(0,3).toUpperCase()
+  const pHead=pp.map(p=>`<th class="vp"><div>${p.name.length>11?p.name.slice(0,11)+'…':p.name}</div></th>`).join('')
+  let prevG=''
+  const rows=mm.map(m=>{
+    const cells=pp.map(p=>{const pr=(rr[p.id]||{})[m.id];const t=(pr&&pr.s1!==null&&pr.s1!==undefined&&pr.s2!==null&&pr.s2!==undefined)?`${pr.s1}-${pr.s2}`:'·';return `<td${t==='·'?' class="e"':''}>${t}</td>`}).join('')
+    const first=m.g!==prevG?' ng':'';prevG=m.g
+    return `<tr class="g${m.g.charCodeAt(0)%2}${first}"><td class="mt"><b>${m.g}</b> ${ab(m.t1)}·${ab(m.t2)}</td>${cells}</tr>`
   }).join('')
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:white;padding:12px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px}}</style></head><body><div style="background:#6a0dad;color:white;text-align:center;padding:12px;border-radius:4px;margin-bottom:12px"><div style="font-size:18px;font-weight:900">⚽ PRODE MUNDIAL 2026</div><div style="font-size:10px;opacity:0.8;margin-top:3px">Pronósticos completos · Fase de Grupos · ${fecha}</div></div>${grpSections}<div style="text-align:center;margin-top:10px;font-size:9px;color:#888;border-top:1px solid #eee;padding-top:6px">Exacto = 3pts · Levante = 1pt · Fallado = 0pts</div></body></html>`
-  const w=window.open('','_blank','width=900,height=800')
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+@page{size:A4 portrait;margin:5mm}
+body{font-family:Arial,Helvetica,sans-serif;background:white;padding:4px}
+.hd{background:#6a0dad;color:white;text-align:center;padding:5px;border-radius:3px;margin-bottom:4px}
+.hd b{font-size:12px}.hd span{font-size:8px;opacity:.85;display:block}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th.vp{height:58px;vertical-align:bottom;background:#1a1a2e;border:0.5px solid #444}
+th.vp div{writing-mode:vertical-rl;transform:rotate(180deg);font-size:6.5px;font-weight:700;color:white;margin:2px auto;white-space:nowrap}
+th.mt0{width:64px;background:#1a1a2e;color:white;font-size:7px;text-align:left;padding-left:3px}
+td{font-size:6.5px;text-align:center;padding:1px 0;border:0.5px solid #e0e0e0;font-weight:700;color:#111}
+td.e{color:#bbb;font-weight:400}
+td.mt{text-align:left;font-size:6.5px;white-space:nowrap;padding-left:3px;color:#333;font-weight:400}
+td.mt b{color:#6a0dad}
+tr.g0{background:#f4eefc}tr.g1{background:#ffffff}
+tr.ng td{border-top:1.2px solid #6a0dad}
+.ft{text-align:center;font-size:6.5px;color:#999;margin-top:3px}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="hd"><b>⚽ PRODE MUNDIAL 2026 — PRONÓSTICOS</b><span>Fase de grupos · ${pp.length} jugadores · ${fecha}</span></div>
+<table><tr><th class="mt0">PARTIDO</th>${pHead}</tr>${rows}</table>
+<div class="ft">Exacto = 3pts · Levante = 1pt · «·» = sin pronóstico</div>
+</body></html>`
+  const w=window.open('','_blank','width=820,height=900')
   w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print()},700)
 }
 
@@ -249,6 +274,10 @@ function Admin(){
   const grps=Object.keys(GRP)
   const played=mm.filter(m=>m.s1!==null).length
   const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
+
+  // Código PRODE26 de un jugador (mismo formato posicional que genera la vista Jugador)
+  const genCodeFor=p=>`PRODE26|${p.name}|${MATCHES.map(m=>{const pr=(rr[p.id]||{})[m.id];return(pr&&pr.s1!==null&&pr.s1!==undefined&&pr.s2!==null&&pr.s2!==undefined)?`${pr.s1}-${pr.s2}`:'?'}).join(',')}`
+  const waShareFor=p=>`https://wa.me/?text=${encodeURIComponent('⚽ *PRODE MUNDIAL 2026*\n👤 *'+p.name+'*\n\n📋 Tu código actual. Pegalo en la web (Importar), editá lo que quieras y mandame el código nuevo:\n\n'+genCodeFor(p))}`
 
   const svP=p=>{setPP(p);LS.set('wc26p',p)}
   const svM=m=>{setMM(m);LS.set('wc26m',m);setSimResult(null)}
@@ -455,7 +484,7 @@ function Admin(){
       </div>)}
 
       {tab==='pronos'&&selP&&(<div style={{padding:'10px 10px 0'}}>
-        <div style={{background:'#ffffff',borderRadius:10,padding:'9px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8,border:'1px solid #e0e4ea'}}><button onClick={()=>setSelP(null)} style={{background:'transparent',border:'none',color:'#4a9eff',cursor:'pointer',fontSize:22,lineHeight:1,padding:0}}>←</button><div style={{fontWeight:700,color:'#f0c030',fontSize:14,flex:1}}>{selP.name}</div></div>
+        <div style={{background:'#ffffff',borderRadius:10,padding:'9px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8,border:'1px solid #e0e4ea'}}><button onClick={()=>setSelP(null)} style={{background:'transparent',border:'none',color:'#4a9eff',cursor:'pointer',fontSize:22,lineHeight:1,padding:0}}>←</button><div style={{fontWeight:700,color:'#f0c030',fontSize:14,flex:1}}>{selP.name}</div><button onClick={()=>{navigator.clipboard?.writeText(genCodeFor(selP)).then(()=>showToast('✓ Código de '+selP.name+' copiado'))}} style={{padding:'6px 10px',background:'#6a0dad',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}>📋 Código</button><a href={waShareFor(selP)} target="_blank" style={{padding:'6px 10px',background:'#25D366',borderRadius:8,color:'white',fontWeight:700,fontSize:11,textDecoration:'none',whiteSpace:'nowrap'}}>📲 WA</a></div>
         <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:6,marginBottom:8}}>{['ALL',...grps].map(g=><button key={g} onClick={()=>setPGrp(g)} style={pill(pGrp===g)}>{g==='ALL'?'Todos':'G'+g}</button>)}</div>
         <div style={{display:'flex',flexDirection:'column',gap:5}}>
           {(pGrp==='ALL'?mm:mm.filter(m=>m.g===pGrp)).map(m=>{const pred=(rr[selP.id]||{})[m.id];const p2=calcPts(pred,m);const has=pred&&pred.s1!==null&&pred.s2!==null;const bc=p2===3?'#27ae60':p2===1?'#f39c12':(p2===0&&m.s1!==null&&has)?'#e74c3c':'#2a2a3a';const bg=p2===3?'rgba(39,174,96,0.08)':p2===1?'rgba(243,156,18,0.08)':(p2===0&&m.s1!==null&&has)?'rgba(231,76,60,0.06)':'#16213e';return(<div key={m.id} style={{background:bg,border:`1px solid ${bc}`,borderRadius:10,padding:'8px 10px'}}><div style={{display:'flex',alignItems:'center',marginBottom:5}}><span style={{fontSize:9,color:'#6a0dad',background:'#ede9f7',padding:'1px 5px',borderRadius:4,fontWeight:700}}>G{m.g}</span>{p2===3&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:6}}>⚡+3</span>}{p2===1&&<span style={{fontSize:10,color:'#f0c030',marginLeft:6}}>📈+1</span>}{p2===0&&m.s1!==null&&has&&<span style={{fontSize:10,color:'#e74c3c',marginLeft:6}}>✗</span>}{m.s1!==null&&<span style={{fontSize:10,color:'#999',marginLeft:'auto'}}>Real:{m.s1}-{m.s2}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span><input type="number" value={pred?.s1??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{color:'#aaa',fontWeight:700}}>-</span><input type="number" value={pred?.s2??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span></div></div>)})}
