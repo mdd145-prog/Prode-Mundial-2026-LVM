@@ -169,24 +169,24 @@ function exportAllPredictions(pp,mm,rr){
   }).join('')
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-@page{size:A4 portrait;margin:5mm}
-body{font-family:Arial,Helvetica,sans-serif;background:white;padding:4px}
-.hd{background:#6a0dad;color:white;text-align:center;padding:5px;border-radius:3px;margin-bottom:4px}
-.hd b{font-size:12px}.hd span{font-size:8px;opacity:.85;display:block}
+@page{size:A4 portrait;margin:8mm}
+body{font-family:Helvetica,Arial,sans-serif;background:white;color:#222;padding:6px}
+.hd{text-align:center;padding:4px 0 10px}
+.hd b{font-size:13px;font-weight:700;color:#222;letter-spacing:1px}
+.hd span{display:block;font-size:8px;color:#999;margin-top:3px;letter-spacing:0.5px}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
-th.vp{height:58px;vertical-align:bottom;background:#1a1a2e;border:0.5px solid #444}
-th.vp div{writing-mode:vertical-rl;transform:rotate(180deg);font-size:6.5px;font-weight:700;color:white;margin:2px auto;white-space:nowrap}
-th.mt0{width:64px;background:#1a1a2e;color:white;font-size:7px;text-align:left;padding-left:3px}
-td{font-size:6.5px;text-align:center;padding:1px 0;border:0.5px solid #e0e0e0;font-weight:700;color:#111}
-td.e{color:#bbb;font-weight:400}
-td.mt{text-align:left;font-size:6.5px;white-space:nowrap;padding-left:3px;color:#333;font-weight:400}
-td.mt b{color:#6a0dad}
-tr.g0{background:#f4eefc}tr.g1{background:#ffffff}
-tr.ng td{border-top:1.2px solid #6a0dad}
-.ft{text-align:center;font-size:6.5px;color:#999;margin-top:3px}
+th.vp{height:56px;vertical-align:bottom;border-bottom:1.5px solid #bbb}
+th.vp div{writing-mode:vertical-rl;transform:rotate(180deg);font-size:6.5px;font-weight:600;color:#444;margin:0 auto 3px;white-space:nowrap}
+th.mt0{width:66px;border-bottom:1.5px solid #bbb;font-size:6.5px;color:#999;text-align:left;vertical-align:bottom;padding-bottom:3px;font-weight:600;letter-spacing:0.5px}
+td{font-size:6.5px;text-align:center;padding:1.5px 0;border-bottom:0.5px solid #eee;color:#222}
+td.e{color:#ccc}
+td.mt{text-align:left;white-space:nowrap;color:#555}
+td.mt b{color:#aaa;font-weight:600;font-size:6px}
+tr.ng td{border-top:1px solid #ccc}
+.ft{text-align:center;font-size:6.5px;color:#bbb;margin-top:8px}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style></head><body>
-<div class="hd"><b>⚽ PRODE MUNDIAL 2026 — PRONÓSTICOS</b><span>Fase de grupos · ${pp.length} jugadores · ${fecha}</span></div>
+<div class="hd"><b>PRODE MUNDIAL 2026 — PRONÓSTICOS</b><span>Fase de grupos · ${pp.length} jugadores · ${fecha}</span></div>
 <table><tr><th class="mt0">PARTIDO</th>${pHead}</tr>${rows}</table>
 <div class="ft">Exacto = 3pts · Levante = 1pt · «·» = sin pronóstico</div>
 </body></html>`
