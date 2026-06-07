@@ -263,6 +263,7 @@ function Admin(){
   const [importLog,setImportLog]=useState(null)
   const [dayFilter,setDayFilter]=useState('')
   const [simResult,setSimResult]=useState(null)
+  const [dupResult,setDupResult]=useState(null)
   const [tablaMode,setTablaMode]=useState(null)
   const [editingId,setEditingId]=useState(null)
   const [editingName,setEditingName]=useState('')
@@ -278,6 +279,20 @@ function Admin(){
   // Código PRODE26 de un jugador (mismo formato posicional que genera la vista Jugador)
   const genCodeFor=p=>`PRODE26|${p.name}|${MATCHES.map(m=>{const pr=(rr[p.id]||{})[m.id];return(pr&&pr.s1!==null&&pr.s1!==undefined&&pr.s2!==null&&pr.s2!==undefined)?`${pr.s1}-${pr.s2}`:'?'}).join(',')}`
   const waShareFor=p=>`https://wa.me/?text=${encodeURIComponent('⚽ *PRODE MUNDIAL 2026*\n👤 *'+p.name+'*\n\n📋 Tu código actual. Pegalo en la web (Importar), editá lo que quieras y mandame el código nuevo:\n\n'+genCodeFor(p))}`
+
+  // Detecta jugadores con el mismo set de pronósticos (mismo código importado 2 veces)
+  const detectDupes=()=>{
+    const sigs={}
+    pp.forEach(p=>{
+      const preds=rr[p.id]||{}
+      const done=Object.values(preds).filter(x=>x&&x.s1!==null&&x.s2!==null).length
+      if(done===0)return // sin pronósticos no hay nada que comparar
+      const sig=MATCHES.map(m=>{const pr=preds[m.id];return(pr&&pr.s1!==null&&pr.s1!==undefined&&pr.s2!==null&&pr.s2!==undefined)?`${pr.s1}-${pr.s2}`:'?'}).join(',')
+      if(!sigs[sig])sigs[sig]=[]
+      sigs[sig].push({name:p.name,done})
+    })
+    setDupResult(Object.values(sigs).filter(g=>g.length>1))
+  }
 
   const svP=p=>{setPP(p);LS.set('wc26p',p)}
   const svM=m=>{setMM(m);LS.set('wc26m',m);setSimResult(null)}
@@ -461,8 +476,37 @@ function Admin(){
           <div style={{fontSize:13,fontWeight:800,color:'#e67e22',marginBottom:8}}>💾 Backup de datos</div>
           <div style={{display:'flex',gap:8}}>
             <button onClick={()=>{const data=JSON.stringify({pp,mm,rr,ts:new Date().toISOString()});const blob=new Blob([data],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`prode2026_backup_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.json`;a.click();URL.revokeObjectURL(url);showToast('✓ Backup descargado')}} style={{flex:1,padding:'10px',background:'#e67e22',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>⬇️ Descargar backup</button>
-            <label style={{flex:1,padding:'10px',background:'#2a1a0a',border:'2px solid #e67e22',borderRadius:8,color:'#e67e22',fontWeight:700,fontSize:13,cursor:'pointer',textAlign:'center'}}>⬆️ Restaurar<input type="file" accept=".json" style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const d=JSON.parse(ev.target.result);if(!d.pp||!d.mm||!d.rr){showToast('Archivo inválido','#e74c3c');return};svAll(d.pp,d.mm,d.rr);showToast(`✓ Restaurado (${d.pp.length} jugadores)`);e.target.value=''}catch{showToast('Error al leer el archivo','#e74c3c')}};reader.readAsText(file)}}/></label>
+            <label style={{flex:1,padding:'10px',background:'#2a1a0a',border:'2px solid #e67e22',borderRadius:8,color:'#e67e22',fontWeight:700,fontSize:13,cursor:'pointer',textAlign:'center'}}>⬆️ Restaurar<input type="file" accept=".json" style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{
+            const d=JSON.parse(ev.target.result)
+            if(!d.pp||!d.mm||!d.rr){showToast('Archivo inválido','#e74c3c');return}
+            if(!confirm(`¿Restaurar backup${d.ts?' del '+new Date(d.ts).toLocaleString('es-AR'):''} (${d.pp.length} jugadores)? Se sube todo a la nube y pisa lo que haya.`)){e.target.value='';return}
+            svAll(d.pp,d.mm,d.rr)
+            // Subir a Supabase — si no, el sync de 30s pisa lo restaurado con lo que haya en la DB
+            try{
+              await sb.from('jugadores').upsert(d.pp.map((p,i)=>({id:p.id,nombre:p.name,orden:p.orden??i})))
+              await sb.from('partidos').upsert(d.mm.map(m=>({id:m.id,grupo:m.g,equipo1:m.t1,equipo2:m.t2,goles1:m.s1??null,goles2:m.s2??null,fecha:m.date,hora:m.time})))
+              const ids=new Set(d.pp.map(p=>p.id))
+              const rows=[]
+              Object.entries(d.rr).forEach(([jid,preds])=>{if(!ids.has(jid))return;Object.entries(preds||{}).forEach(([mid,p])=>{const s1=parseInt(p?.s1),s2=parseInt(p?.s2);if(!isNaN(s1)&&!isNaN(s2))rows.push({jugador_id:jid,partido_id:mid,goles1:s1,goles2:s2})})})
+              if(rows.length)await sb.from('pronosticos').upsert(rows,{onConflict:'jugador_id,partido_id'})
+              showToast(`✓ Restaurado y subido a la nube (${d.pp.length} jugadores)`)
+            }catch(err){console.error('Restore SB:',err);showToast('Restaurado local, falló subir a la nube','#e67e22')}
+            e.target.value=''
+            }catch{showToast('Error al leer el archivo','#e74c3c')}};reader.readAsText(file)}}/></label>
           </div>
+        </div>
+        <div style={{background:'#ffffff',borderRadius:10,padding:12,marginBottom:10,border:'1px solid #c0392b'}}>
+          <div style={{fontSize:13,fontWeight:800,color:'#c0392b',marginBottom:8}}>🕵️ Control de duplicados</div>
+          <button onClick={detectDupes} style={{width:'100%',padding:'10px',background:'#c0392b',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>🔍 Detectar prodes duplicados</button>
+          {dupResult&&(dupResult.length===0?(
+            <div style={{marginTop:8,fontSize:12,color:'#27ae60',fontWeight:700}}>✅ Sin duplicados: todos los prodes son distintos</div>
+          ):(
+            <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
+              {dupResult.map((g,i)=>(<div key={i} style={{background:'rgba(231,76,60,0.08)',border:'1px solid #e74c3c',borderRadius:8,padding:'8px 10px',fontSize:12,color:'#c0392b',lineHeight:1.5}}><b>⚠️ Pronósticos idénticos ({g[0].done}/72):</b><br/>{g.map(x=>x.name).join(' · ')}</div>))}
+              <div style={{fontSize:10,color:'#888'}}>Probablemente se importó el mismo código con distinto nombre. Corregilo en Pronos o pedile el código real al jugador.</div>
+            </div>
+          ))}
+          {dupResult&&<button onClick={()=>setDupResult(null)} style={{width:'100%',marginTop:8,padding:'7px',background:'#f0f2f5',border:'none',borderRadius:8,color:'#888',cursor:'pointer',fontSize:12}}>✕ Cerrar</button>}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:10}}>
           <button onClick={()=>exportAllPredictions(pp,mm,rr)} style={{padding:'14px',background:'#8e44ad',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:24}}>📋</span><div><div style={{fontWeight:800}}>Todos los pronósticos</div><div style={{fontSize:11,opacity:0.7,marginTop:2}}>PDF con todos los grupos y jugadores</div></div></button>
@@ -502,7 +546,7 @@ function Admin(){
         <div style={{background:'#ffffff',borderRadius:10,padding:'9px 12px',marginBottom:8,display:'flex',alignItems:'center',gap:8,border:'1px solid #e0e4ea'}}><button onClick={()=>setSelP(null)} style={{background:'transparent',border:'none',color:'#4a9eff',cursor:'pointer',fontSize:22,lineHeight:1,padding:0}}>←</button><div style={{fontWeight:700,color:'#f0c030',fontSize:14,flex:1}}>{selP.name}</div><button onClick={()=>{navigator.clipboard?.writeText(genCodeFor(selP)).then(()=>showToast('✓ Código de '+selP.name+' copiado'))}} style={{padding:'6px 10px',background:'#6a0dad',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:11,cursor:'pointer',whiteSpace:'nowrap'}}>📋 Código</button><a href={waShareFor(selP)} target="_blank" style={{padding:'6px 10px',background:'#25D366',borderRadius:8,color:'white',fontWeight:700,fontSize:11,textDecoration:'none',whiteSpace:'nowrap'}}>📲 WA</a></div>
         <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:6,marginBottom:8}}>{['ALL',...grps].map(g=><button key={g} onClick={()=>setPGrp(g)} style={pill(pGrp===g)}>{g==='ALL'?'Todos':'G'+g}</button>)}</div>
         <div style={{display:'flex',flexDirection:'column',gap:5}}>
-          {(pGrp==='ALL'?mm:mm.filter(m=>m.g===pGrp)).map(m=>{const pred=(rr[selP.id]||{})[m.id];const p2=calcPts(pred,m);const has=pred&&pred.s1!==null&&pred.s2!==null;const bc=p2===3?'#27ae60':p2===1?'#f39c12':(p2===0&&m.s1!==null&&has)?'#e74c3c':'#2a2a3a';const bg=p2===3?'rgba(39,174,96,0.08)':p2===1?'rgba(243,156,18,0.08)':(p2===0&&m.s1!==null&&has)?'rgba(231,76,60,0.06)':'#16213e';return(<div key={m.id} style={{background:bg,border:`1px solid ${bc}`,borderRadius:10,padding:'8px 10px'}}><div style={{display:'flex',alignItems:'center',marginBottom:5}}><span style={{fontSize:9,color:'#6a0dad',background:'#ede9f7',padding:'1px 5px',borderRadius:4,fontWeight:700}}>G{m.g}</span>{p2===3&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:6}}>⚡+3</span>}{p2===1&&<span style={{fontSize:10,color:'#f0c030',marginLeft:6}}>📈+1</span>}{p2===0&&m.s1!==null&&has&&<span style={{fontSize:10,color:'#e74c3c',marginLeft:6}}>✗</span>}{m.s1!==null&&<span style={{fontSize:10,color:'#999',marginLeft:'auto'}}>Real:{m.s1}-{m.s2}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span><input type="number" value={pred?.s1??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{color:'#aaa',fontWeight:700}}>-</span><input type="number" value={pred?.s2??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span></div></div>)})}
+          {(pGrp==='ALL'?mm:mm.filter(m=>m.g===pGrp)).map(m=>{const pred=(rr[selP.id]||{})[m.id];const p2=calcPts(pred,m);const has=pred&&pred.s1!==null&&pred.s2!==null;const bc=p2===3?'#27ae60':p2===1?'#f39c12':(p2===0&&m.s1!==null&&has)?'#e74c3c':'#e0e4ea';const bg=p2===3?'rgba(39,174,96,0.08)':p2===1?'rgba(243,156,18,0.08)':(p2===0&&m.s1!==null&&has)?'rgba(231,76,60,0.06)':'#ffffff';return(<div key={m.id} style={{background:bg,border:`1px solid ${bc}`,borderRadius:10,padding:'8px 10px'}}><div style={{display:'flex',alignItems:'center',marginBottom:5}}><span style={{fontSize:9,color:'#6a0dad',background:'#ede9f7',padding:'1px 5px',borderRadius:4,fontWeight:700}}>G{m.g}</span>{p2===3&&<span style={{fontSize:10,color:'#2ecc71',marginLeft:6}}>⚡+3</span>}{p2===1&&<span style={{fontSize:10,color:'#f0c030',marginLeft:6}}>📈+1</span>}{p2===0&&m.s1!==null&&has&&<span style={{fontSize:10,color:'#e74c3c',marginLeft:6}}>✗</span>}{m.s1!==null&&<span style={{fontSize:10,color:'#999',marginLeft:'auto'}}>Real:{m.s1}-{m.s2}</span>}</div><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{flex:1,textAlign:'right',fontSize:12,color:'#222',fontWeight:500}}>{m.t1}</span><input type="number" value={pred?.s1??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s1:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{color:'#aaa',fontWeight:700}}>-</span><input type="number" value={pred?.s2??''} min="0" max="20" onChange={e=>svR({...rr,[selP.id]:{...(rr[selP.id]||{}),[m.id]:{...(rr[selP.id]?.[m.id]||{}),s2:toNum(e.target.value)}}})} onBlur={()=>dbSavePred(selP.id,m.id)} style={si}/><span style={{flex:1,fontSize:12,color:'#222',fontWeight:500}}>{m.t2}</span></div></div>)})}
         </div>
       </div>)}
 
