@@ -317,7 +317,7 @@ function Admin(){
   const dbSavePlayerPreds=async(jugId,preds)=>{const rows=Object.entries(preds).filter(([,p])=>p&&p.s1!==null&&p.s2!==null).map(([mid,p])=>({jugador_id:jugId,partido_id:mid,goles1:p.s1,goles2:p.s2}));if(!rows.length)return;await sb.from('pronosticos').upsert(rows,{onConflict:'jugador_id,partido_id'})}
   const seedPartidos=async()=>{const rows=MATCHES.map(m=>({id:m.id,grupo:m.g,equipo1:m.t1,equipo2:m.t2,goles1:null,goles2:null,fecha:m.date,hora:m.time}));await sb.from('partidos').upsert(rows)}
   // Trae TODOS los pronósticos paginando: Supabase corta en 1000 filas por request (con 15+ jugadores ya se supera)
-  const fetchAllPronos=async()=>{let all=[],from=0;const size=1000;for(;;){const {data,error}=await sb.from('pronosticos').select('*').range(from,from+size-1);if(error||!data||!data.length)break;all=all.concat(data);if(data.length<size)break;from+=size}return all}
+  const fetchAllPronos=async()=>{let all=[],from=0;const size=1000;for(;;){const {data,error}=await sb.from('pronosticos').select('*').order('jugador_id').order('partido_id').range(from,from+size-1);if(error||!data||!data.length)break;all=all.concat(data);if(data.length<size)break;from+=size}return all}
 
   // Debounced result save — fix para que no se borre al refrescar
   const debounceSaveResult=(matchId,newMM)=>{
