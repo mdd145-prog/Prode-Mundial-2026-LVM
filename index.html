@@ -607,25 +607,44 @@ function AdminOffline(){
   const [dayFilter,setDayFilter]=useState('')
   const [importTxt,setImportTxt]=useState('')
   const [toast,setToast]=useState(null)
+  const [loading,setLoading]=useState(false)
+  const [fetchErr,setFetchErr]=useState(null)
   const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
 
   const board=buildBoard(pp,mm,rr)
   const played=mm.filter(m=>m.s1!==null).length
   const noData=!pp.length
 
-  const importFromOnline=()=>{
-    const onlineP=LS.get('wc26p',[])
-    const onlineM=LS.get('wc26m',null)
-    const onlineR=LS.get('wc26r',{})
-    if(!onlineP.length){showToast('No hay datos del admin online en este dispositivo','#e74c3c');return}
-    const newMM=onlineM?MATCHES.map((m,i)=>({...m,s1:onlineM[i]?.s1??null,s2:onlineM[i]?.s2??null})):MATCHES
-    const now=new Date().toISOString()
-    setPP(onlineP);LS.set('wc26off_p',onlineP)
-    setMM(newMM);LS.set('wc26off_m',newMM)
-    setRR(onlineR);LS.set('wc26off_r',onlineR)
-    setTs(now);LS.set('wc26off_ts',now)
-    showToast(`✓ ${onlineP.length} jugadores cargados`)
+  // Baja TODO de Supabase (jugadores + partidos + pronósticos) y persiste local.
+  // Después de la primera vez ya no necesita internet — los resultados se cargan offline.
+  const fetchFromSupabase=async()=>{
+    setLoading(true);setFetchErr(null)
+    try{
+      const fetchAllPronos=async()=>{let all=[],from=0;const size=1000;for(;;){const {data,error}=await sb.from('pronosticos').select('*').order('jugador_id').order('partido_id').range(from,from+size-1);if(error||!data||!data.length)break;all=all.concat(data);if(data.length<size)break;from+=size}return all}
+      const [{data:jData,error:jErr},{data:pData,error:pErr},prData]=await Promise.all([
+        sb.from('jugadores').select('*').order('orden'),
+        sb.from('partidos').select('id,goles1,goles2'),
+        fetchAllPronos()
+      ])
+      if(jErr)throw new Error(jErr.message)
+      if(pErr)throw new Error(pErr.message)
+      if(!jData?.length)throw new Error('Sin jugadores en Supabase')
+      const newPP=jData.map(j=>({id:j.id,name:j.nombre,orden:j.orden}))
+      const newMM=MATCHES.map(m=>{const db=pData?.find(p=>p.id===m.id);return{...m,s1:db?.goles1??null,s2:db?.goles2??null}})
+      const newRR={}
+      ;(prData||[]).forEach(p=>{if(!newRR[p.jugador_id])newRR[p.jugador_id]={};newRR[p.jugador_id][p.partido_id]={s1:p.goles1,s2:p.goles2}})
+      const now=new Date().toISOString()
+      setPP(newPP);LS.set('wc26off_p',newPP)
+      setMM(newMM);LS.set('wc26off_m',newMM)
+      setRR(newRR);LS.set('wc26off_r',newRR)
+      setTs(now);LS.set('wc26off_ts',now)
+      showToast(`✓ ${newPP.length} jugadores, ${prData.length} pronósticos`)
+    }catch(e){setFetchErr(e.message||'Error de conexión');showToast('Error: '+(e.message||'sin conexión'),'#e74c3c')}
+    setLoading(false)
   }
+
+  // Si no hay datos cacheados al abrir, baja automáticamente de Supabase.
+  useEffect(()=>{if(noData&&!loading&&!fetchErr)fetchFromSupabase()},[])
 
   const importFromJSON=()=>{
     try{
@@ -680,15 +699,24 @@ function AdminOffline(){
       {toast&&<div style={{position:'fixed',top:80,left:'50%',transform:'translateX(-50%)',background:toast.color,color:'white',padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,zIndex:200,boxShadow:'0 2px 8px rgba(0,0,0,0.2)'}}>{toast.msg}</div>}
 
       {noData?(
-        <div style={{padding:'20px 14px'}}>
-          <div style={{background:'#ffffff',borderRadius:12,padding:16,marginBottom:12,border:'1px solid #e0e4ea'}}>
-            <div style={{fontSize:14,fontWeight:700,marginBottom:8}}>📥 Cargar datos</div>
-            <div style={{fontSize:12,color:'#666',marginBottom:12,lineHeight:1.5}}>Este admin no toca Supabase. Importá una snapshot del admin online (necesita conexión la primera vez) o pegá un JSON exportado.</div>
-            <button onClick={importFromOnline} style={{width:'100%',padding:12,background:'#1a6b8a',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:12}}>🔄 Cargar del admin online de este dispositivo</button>
-            <div style={{fontSize:11,color:'#888',marginBottom:6}}>O pegá JSON exportado:</div>
-            <textarea value={importTxt} onChange={e=>setImportTxt(e.target.value)} placeholder='{"jugadores":[...],"partidos":[...],"pronosticos":{...}}' style={{width:'100%',height:80,padding:8,borderRadius:8,border:'1px solid #e0e4ea',background:'#f8f9fa',color:'#1a1a2e',fontSize:11,fontFamily:'monospace',outline:'none',resize:'none',marginBottom:6}}/>
-            <button onClick={importFromJSON} disabled={!importTxt.trim()} style={{width:'100%',padding:10,background:importTxt.trim()?'#6a0dad':'#ccc',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:importTxt.trim()?'pointer':'not-allowed'}}>Importar JSON</button>
-          </div>
+        <div style={{padding:'40px 20px',textAlign:'center'}}>
+          {loading?(
+            <div>
+              <div style={{fontSize:36,marginBottom:12}}>⏳</div>
+              <div style={{fontSize:16,fontWeight:700,color:'#1a6b8a',marginBottom:6}}>Descargando datos…</div>
+              <div style={{fontSize:12,color:'#666'}}>Esto solo pasa la primera vez.</div>
+            </div>
+          ):fetchErr?(
+            <div>
+              <div style={{fontSize:36,marginBottom:12}}>📡</div>
+              <div style={{fontSize:16,fontWeight:700,color:'#c0392b',marginBottom:6}}>No se pudo descargar</div>
+              <div style={{fontSize:12,color:'#666',marginBottom:16}}>{fetchErr}</div>
+              <button onClick={fetchFromSupabase} style={{padding:'10px 24px',background:'#1a6b8a',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer'}}>🔄 Reintentar</button>
+              <div style={{fontSize:11,color:'#999',marginTop:24}}>Conectate al WiFi y reintentá.</div>
+            </div>
+          ):(
+            <div style={{fontSize:13,color:'#666'}}>Iniciando…</div>
+          )}
         </div>
       ):tab==='tabla'?(
         <div style={{padding:'12px 12px 0'}}>
@@ -732,9 +760,15 @@ function AdminOffline(){
       ):tab==='datos'?(
         <div style={{padding:'14px'}}>
           <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
-            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>🔄 Refrescar desde admin online</div>
-            <div style={{fontSize:11,color:'#666',marginBottom:8}}>Pisa los datos offline con la última snapshot del admin online de este dispositivo.</div>
-            <button onClick={importFromOnline} style={{width:'100%',padding:10,background:'#1a6b8a',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>Cargar del admin online</button>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>🔄 Refrescar desde Supabase</div>
+            <div style={{fontSize:11,color:'#666',marginBottom:8}}>Baja los pronósticos actualizados. Necesita conexión. Los resultados que cargaste offline se conservan.</div>
+            <button onClick={async()=>{
+              const prevMM=mm
+              await fetchFromSupabase()
+              // Mantener los resultados que ya tenías cargados offline (Supabase puede tenerlos vacíos)
+              const merged=mm.map(m=>{const prev=prevMM.find(x=>x.id===m.id);return prev&&prev.s1!==null&&m.s1===null?{...m,s1:prev.s1,s2:prev.s2}:m})
+              setMM(merged);LS.set('wc26off_m',merged)
+            }} disabled={loading} style={{width:'100%',padding:10,background:loading?'#999':'#1a6b8a',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:loading?'wait':'pointer'}}>{loading?'Descargando…':'Refrescar pronósticos'}</button>
           </div>
           <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>📤 Exportar JSON</div>
