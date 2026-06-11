@@ -726,14 +726,14 @@ function AdminOffline(){
         const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
         // Medidas en cm FÍSICOS via vw. iPhone 15 Pro = 6cm físicos de ancho → 1cm = 16.67vw.
         // POS=0.3 JUGADOR=2 PTS=0.9 JUG=0.6 3/1/0=0.35 %=0.5 (total 5.35cm). Alto 9cm. Margen 2cm.
-        const cm=n=>`min(${(n*100/6).toFixed(2)}vw, ${(n*430/6).toFixed(2)}px)`
+        const cm=n=>`min(${(n*0.9*100/6).toFixed(2)}vw, ${(n*0.9*430/6).toFixed(2)}px)`
         const N=Math.max(1,board.length)
         const rowH=cm((9-1.4)/N)
         const cellTH={padding:'0.4vw 0.2vw',color:'white',textAlign:'center',lineHeight:1,fontWeight:400,fontSize:cm(0.178)}
         const cellTD={padding:'0 0.2vw',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH,overflow:'hidden',fontWeight:400,fontSize:cm(0.203)}
         return(
           <div style={{padding:cm(1)+' 0 10px',display:'flex',justifyContent:'center'}}>
-            <div style={{height:cm(9),width:cm(5.35),display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
+            <div style={{height:cm(9),width:cm(5.55),display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
               <div style={{display:'flex',background:hdrColor,flexShrink:0}}>
                 <div style={{flex:1,color:'white',fontSize:cm(0.308),fontWeight:900,padding:cm(0.13)+' '+cm(0.18)}}>{title}</div>
                 <div style={{background:statsColor,color:'white',fontSize:cm(0.178),fontWeight:700,padding:cm(0.13)+' '+cm(0.18),display:'flex',alignItems:'center'}}>RESULTADOS</div>
@@ -748,7 +748,7 @@ function AdminOffline(){
                     <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>3</th>
                     <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>1</th>
                     <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>0</th>
-                    <th style={{...cellTH,background:statsColor,width:cm(0.5)}}>%</th>
+                    <th style={{...cellTH,background:statsColor,width:cm(0.7)}}>%</th>
                   </tr>
                 </thead>
                 <tbody>
