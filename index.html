@@ -727,7 +727,6 @@ function AdminOffline(){
         // Rows se reparten el alto disponible. Más jugadores = filas más finas.
         const cellTH={padding:'3px 2px',fontSize:9,fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
         const cellTD={padding:'2px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1.1}
-        const firstName=n=>(n||'').split(' ')[0]
         return(
           <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
             <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'100%',maxWidth:'calc(100vw - 16px)'}}>
@@ -738,14 +737,14 @@ function AdminOffline(){
               <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
                 <thead>
                   <tr>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'8%'}}>POS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:6,width:'28%'}}>JUGADOR</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'12%'}}>PTS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'10%'}}>JUG</th>
-                    <th style={{...cellTH,background:statsColor,width:'9%'}}>3</th>
-                    <th style={{...cellTH,background:statsColor,width:'9%'}}>1</th>
-                    <th style={{...cellTH,background:statsColor,width:'9%'}}>0</th>
-                    <th style={{...cellTH,background:statsColor,width:'15%'}}>%</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'7%'}}>POS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:6}}>JUGADOR</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'11%'}}>PTS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'9%'}}>JUG</th>
+                    <th style={{...cellTH,background:statsColor,width:'8%'}}>3</th>
+                    <th style={{...cellTH,background:statsColor,width:'8%'}}>1</th>
+                    <th style={{...cellTH,background:statsColor,width:'8%'}}>0</th>
+                    <th style={{...cellTH,background:statsColor,width:'13%'}}>%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -755,7 +754,7 @@ function AdminOffline(){
                     return(
                       <tr key={p.id} style={{background:bg}}>
                         <td style={{...cellTD,fontWeight:700,fontSize:11}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:6,fontWeight:700,fontSize:12,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{medal?medal+' ':''}{firstName(p.name)}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:6,fontWeight:700,fontSize:12,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{medal?medal+' ':''}{p.name}</td>
                         <td style={{...cellTD,fontWeight:900,fontSize:14}}>{p.tot}</td>
                         <td style={{...cellTD,fontSize:11}}>{p.jug}</td>
                         <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:11}}>{p.ex}</td>
