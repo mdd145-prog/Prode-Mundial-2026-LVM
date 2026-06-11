@@ -727,12 +727,12 @@ function AdminOffline(){
         // Rows se reparten el alto disponible. Más jugadores = filas más finas.
         // Escalado dinámico: cuanto más jugadores, más finas las filas para que TODOS entren en 9cm.
         const N=Math.max(1,board.length)
-        const availPx=290  // ~9cm menos title + header + footer
+        const availPx=255  // 9cm (~340px) - title (~30) - header (~20) - footer (~14) - bordes/safety
         const rowH=Math.max(10,Math.floor(availPx/N))
-        const fSize=Math.max(7,Math.min(13,rowH-3))
+        const fSize=Math.max(7,Math.min(12,Math.floor(rowH*0.72)))
         const fPts=Math.max(9,fSize+2)
         const cellTH={padding:'3px 2px',fontSize:Math.max(7,Math.min(10,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
-        const cellTD={padding:0,textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px'}
+        const cellTD={padding:'0 2px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden'}
         return(
           <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
             <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'100%',maxWidth:'calc(100vw - 16px)'}}>
