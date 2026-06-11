@@ -724,56 +724,55 @@ function AdminOffline(){
         const statsColor=oficial?'#27ae60':'#e67e22'
         const title=oficial?'TABLA OFICIAL':'TABLA NO OFICIAL'
         const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-        // Rows se reparten el alto disponible. Más jugadores = filas más finas.
-        // Tabla 9cm de alto, ancho = pantalla completa con 8px de margen.
-        // Proporciones que pediste (POS=0.3 JUG=1.7 PTS=0.3 JUG=0.5 3/1/0=0.3 %=0.5, total 4.2)
-        // convertidas a % para llenar el viewport del iPhone.
+        // Medidas en cm FÍSICOS del iPhone (no CSS). El iPhone del usuario mide 6cm de ancho,
+        // así que 1cm físico = 100/6 vw = 16.67vw. Todas las medidas pasan por cm() para que el
+        // render coincida con cm reales sobre la pantalla (POS=0.3 JUGADOR=2 PTS=0.9 JUG=0.6
+        // 3/1/0=0.35 %=0.5, alto=9cm, margen arriba=2cm).
+        const cm=n=>(n*100/6).toFixed(3)+'vw'
         const N=Math.max(1,board.length)
-        const availPx=280
-        const rowH=Math.max(8,Math.floor(availPx/N))
-        const fSize=Math.max(7,Math.min(14,Math.floor(rowH*0.75)))
-        const fPts=Math.max(9,fSize+2)
-        const cellTH={padding:'2px 1px',fontSize:Math.max(7,Math.min(11,fSize-1)),fontWeight:400,color:'white',textAlign:'center',lineHeight:1}
-        const cellTD={padding:'0 1px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden',fontWeight:400}
+        const chromeCm=1.5  // title + header + footer aproximado
+        const rowH=cm((9-chromeCm)/N)
+        const cellTH={padding:'0.5vw 0.3vw',color:'white',textAlign:'center',lineHeight:1,fontWeight:400,fontSize:cm(0.22)}
+        const cellTD={padding:'0 0.3vw',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH,overflow:'hidden',fontWeight:400,fontSize:cm(0.27)}
         return(
-          <div style={{padding:'4cm 0 10px',display:'flex',justifyContent:'center'}}>
-            <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'100%'}}>
+          <div style={{padding:cm(2)+' 0 10px',display:'flex',justifyContent:'center'}}>
+            <div style={{height:cm(9),width:cm(5.35),display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
               <div style={{display:'flex',background:hdrColor,flexShrink:0}}>
-                <div style={{flex:1,color:'white',fontSize:14,fontWeight:900,padding:'6px 10px'}}>{title}</div>
-                <div style={{background:statsColor,color:'white',fontSize:9,fontWeight:700,padding:'6px 10px',display:'flex',alignItems:'center'}}>RESULTADOS</div>
+                <div style={{flex:1,color:'white',fontSize:cm(0.4),fontWeight:900,padding:cm(0.15)+' '+cm(0.2)}}>{title}</div>
+                <div style={{background:statsColor,color:'white',fontSize:cm(0.22),fontWeight:700,padding:cm(0.15)+' '+cm(0.2),display:'flex',alignItems:'center'}}>RESULTADOS</div>
               </div>
               <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
                 <thead>
                   <tr>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'5.6%'}}>POS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:6,width:'37.4%'}}>JUGADOR</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'16.8%'}}>PTS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'11.2%'}}>JUG</th>
-                    <th style={{...cellTH,background:statsColor,width:'6.5%'}}>3</th>
-                    <th style={{...cellTH,background:statsColor,width:'6.5%'}}>1</th>
-                    <th style={{...cellTH,background:statsColor,width:'6.5%'}}>0</th>
-                    <th style={{...cellTH,background:statsColor,width:'9.5%'}}>%</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:cm(0.3)}}>POS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:cm(0.1),width:cm(2)}}>JUGADOR</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:cm(0.9)}}>PTS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:cm(0.6)}}>JUG</th>
+                    <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>3</th>
+                    <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>1</th>
+                    <th style={{...cellTH,background:statsColor,width:cm(0.35)}}>0</th>
+                    <th style={{...cellTH,background:statsColor,width:cm(0.5)}}>%</th>
                   </tr>
                 </thead>
                 <tbody>
                   {board.map((p,i)=>{
                     const bg=i%2===0?'#d9d9d9':'#ffffff'
                     return(
-                      <tr key={p.id} style={{background:bg,height:rowH+'px'}}>
-                        <td style={{...cellTD,fontSize:fSize}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:5,fontSize:fSize+1,whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
-                        <td style={{...cellTD,fontSize:fPts}}>{p.tot}</td>
-                        <td style={{...cellTD,fontSize:fSize}}>{p.jug}</td>
-                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.ex}</td>
-                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.lv}</td>
-                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.fail}</td>
-                        <td style={{...cellTD,fontSize:Math.max(5,fSize-1),color:'#444'}}>{p.pct}</td>
+                      <tr key={p.id} style={{background:bg,height:rowH}}>
+                        <td style={{...cellTD,fontSize:cm(0.25)}}>{i+1}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:cm(0.1),fontSize:cm(0.3),whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
+                        <td style={{...cellTD,fontSize:cm(0.35)}}>{p.tot}</td>
+                        <td style={{...cellTD,fontSize:cm(0.25)}}>{p.jug}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:cm(0.25)}}>{p.ex}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:cm(0.25)}}>{p.lv}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:cm(0.25)}}>{p.fail}</td>
+                        <td style={{...cellTD,fontSize:cm(0.2),color:'#444'}}>{p.pct}</td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
-              <div style={{textAlign:'center',padding:'2px',fontSize:6,color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
+              <div style={{textAlign:'center',padding:cm(0.08),fontSize:cm(0.18),color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
             </div>
           </div>
         )
