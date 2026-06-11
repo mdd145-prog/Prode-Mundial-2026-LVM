@@ -608,6 +608,7 @@ function AdminOffline(){
   const [tab,setTab]=useState('oficial')
   const [dayFilter,setDayFilter]=useState('')
   const [anaMatchId,setAnaMatchId]=useState(()=>LS.get('wc26off_anaM',null))
+  const [anaSoloNoJug,setAnaSoloNoJug]=useState(()=>LS.get('wc26off_anaSNJ',false))
   const [importTxt,setImportTxt]=useState('')
   const [toast,setToast]=useState(null)
   const [loading,setLoading]=useState(false)
@@ -823,10 +824,18 @@ function AdminOffline(){
         const fmtH=match.date?fmtDate(match.date):''
         return(<div style={{padding:'10px 10px 0'}}>
           <div style={{background:'#ffffff',borderRadius:10,padding:10,marginBottom:10,border:'1px solid #e0e4ea'}}>
-            <div style={{fontSize:11,fontWeight:700,color:'#666',marginBottom:5,letterSpacing:0.5}}>PARTIDO</div>
-            <select value={match.id} onChange={e=>{setAnaMatchId(e.target.value);LS.set('wc26off_anaM',e.target.value)}} style={{width:'100%',padding:'9px 8px',borderRadius:8,border:'1px solid #c9b5f0',background:'#f8f4ff',color:'#1a1a2e',fontSize:13,fontWeight:600,outline:'none'}}>
-              {mm.map(m=>(<option key={m.id} value={m.id}>{m.g} · {m.t1} vs {m.t2}{m.date?' · '+fmtDate(m.date):''}{m.s1!==null?` (${m.s1}-${m.s2})`:''}</option>))}
-            </select>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#666',letterSpacing:0.5}}>PARTIDO</div>
+              <div style={{display:'flex',gap:4}}>
+                <button onClick={()=>{setAnaSoloNoJug(false);LS.set('wc26off_anaSNJ',false)}} style={{padding:'3px 10px',borderRadius:14,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:!anaSoloNoJug?'#6a0dad':'#ebebeb',color:!anaSoloNoJug?'white':'#666'}}>Todos</button>
+                <button onClick={()=>{setAnaSoloNoJug(true);LS.set('wc26off_anaSNJ',true);const next=noJug[0];if(next){setAnaMatchId(next.id);LS.set('wc26off_anaM',next.id)}}} style={{padding:'3px 10px',borderRadius:14,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:anaSoloNoJug?'#6a0dad':'#ebebeb',color:anaSoloNoJug?'white':'#666'}}>Sin jugar</button>
+              </div>
+            </div>
+            {(()=>{const opts=anaSoloNoJug?noJug:mm;if(!opts.length)return(<div style={{padding:'10px 8px',fontSize:12,color:'#888',textAlign:'center'}}>No hay partidos sin jugar</div>);return(
+              <select value={opts.find(m=>m.id===match.id)?match.id:opts[0].id} onChange={e=>{setAnaMatchId(e.target.value);LS.set('wc26off_anaM',e.target.value)}} style={{width:'100%',padding:'9px 8px',borderRadius:8,border:'1px solid #c9b5f0',background:'#f8f4ff',color:'#1a1a2e',fontSize:13,fontWeight:600,outline:'none'}}>
+                {opts.map(m=>(<option key={m.id} value={m.id}>{m.g} · {m.t1} vs {m.t2}{m.date?' · '+fmtDate(m.date):''}{m.s1!==null?` (${m.s1}-${m.s2})`:''}</option>))}
+              </select>
+            )})()}
           </div>
           <div style={{background:'linear-gradient(135deg,#6a0dad,#4a0090)',borderRadius:10,padding:14,marginBottom:10,color:'white',textAlign:'center'}}>
             <div style={{fontSize:9,color:'#d4b3ff',letterSpacing:1,marginBottom:4}}>{fmtH.toUpperCase()}{match.time?' · '+match.time+' HS':''}</div>
