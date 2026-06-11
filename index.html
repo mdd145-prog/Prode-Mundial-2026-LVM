@@ -732,8 +732,8 @@ function AdminOffline(){
         const rowH=Math.max(8,Math.floor(availPx/N))
         const fSize=Math.max(6,Math.min(11,Math.floor(rowH*0.7)))
         const fPts=Math.max(8,fSize+1)
-        const cellTH={padding:'2px 1px',fontSize:Math.max(6,Math.min(9,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
-        const cellTD={padding:'0 1px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden'}
+        const cellTH={padding:'2px 1px',fontSize:Math.max(6,Math.min(9,fSize-1)),fontWeight:400,color:'white',textAlign:'center',lineHeight:1}
+        const cellTD={padding:'0 1px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden',fontWeight:400}
         return(
           <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
             <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'fit-content'}}>
@@ -745,7 +745,7 @@ function AdminOffline(){
                 <thead>
                   <tr>
                     <th style={{...cellTH,background:'#1a1a2e',width:'0.3cm'}}>POS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:4,width:'1.5cm'}}>JUGADOR</th>
+                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:4,width:'1.7cm'}}>JUGADOR</th>
                     <th style={{...cellTH,background:'#1a1a2e',width:'0.3cm'}}>PTS</th>
                     <th style={{...cellTH,background:'#1a1a2e',width:'0.3cm'}}>JUG</th>
                     <th style={{...cellTH,background:statsColor,width:'0.3cm'}}>3</th>
@@ -759,13 +759,13 @@ function AdminOffline(){
                     const bg=i%2===0?'#d9d9d9':'#ffffff'
                     return(
                       <tr key={p.id} style={{background:bg,height:rowH+'px'}}>
-                        <td style={{...cellTD,fontWeight:700,fontSize:fSize}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:4,fontWeight:700,fontSize:fSize,whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
-                        <td style={{...cellTD,fontWeight:900,fontSize:fPts}}>{p.tot}</td>
+                        <td style={{...cellTD,fontSize:fSize}}>{i+1}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:4,fontSize:fSize,whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
+                        <td style={{...cellTD,fontSize:fPts}}>{p.tot}</td>
                         <td style={{...cellTD,fontSize:fSize}}>{p.jug}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.ex}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.lv}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.fail}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.ex}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.lv}</td>
+                        <td style={{...cellTD,color:'#1a6b2e',fontSize:fSize}}>{p.fail}</td>
                         <td style={{...cellTD,fontSize:Math.max(5,fSize-1),color:'#444'}}>{p.pct}</td>
                       </tr>
                     )
