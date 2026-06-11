@@ -726,7 +726,7 @@ function AdminOffline(){
         const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
         // Medidas en cm FÍSICOS via vw. iPhone 15 Pro = 6cm físicos de ancho → 1cm = 16.67vw.
         // POS=0.3 JUGADOR=2 PTS=0.9 JUG=0.6 3/1/0=0.35 %=0.5 (total 5.35cm). Alto 9cm. Margen 2cm.
-        const cm=n=>(n*100/6).toFixed(2)+'vw'
+        const cm=n=>`min(${(n*100/6).toFixed(2)}vw, ${(n*430/6).toFixed(2)}px)`
         const N=Math.max(1,board.length)
         const rowH=cm((9-1.4)/N)
         const cellTH={padding:'0.4vw 0.2vw',color:'white',textAlign:'center',lineHeight:1,fontWeight:400,fontSize:cm(0.178)}
