@@ -128,7 +128,7 @@ function buildBoard(pp,mm,rr){
       if(p2===3)ex++;else if(p2===1)lv++;else fail++
     }
     const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length
-    const pct=jug>0?((ex/jug)*100).toFixed(2)+'%':'-'
+    const pct=jug>0?(((ex+lv)/jug)*100).toFixed(2)+'%':'-'
     return{...p,tot,ex,lv,fail,jug,done,pct}
   }).sort((a,b)=>b.tot-a.tot)
 }
