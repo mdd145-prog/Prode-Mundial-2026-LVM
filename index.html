@@ -735,23 +735,23 @@ function AdminOffline(){
         const cellTH={padding:'2px 1px',fontSize:Math.max(6,Math.min(9,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
         const cellTD={padding:'0 1px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden'}
         return(
-          <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
-            <div style={{width:'7cm',height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
+          <div style={{padding:'10px 0.5cm',display:'flex',justifyContent:'center'}}>
+            <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'fit-content'}}>
               <div style={{display:'flex',background:hdrColor,flexShrink:0}}>
-                <div style={{flex:1,color:'white',fontSize:11,fontWeight:900,padding:'4px 6px'}}>{title}</div>
-                <div style={{background:statsColor,color:'white',fontSize:7,fontWeight:700,padding:'4px 6px',display:'flex',alignItems:'center'}}>RESULTADOS</div>
+                <div style={{flex:1,color:'white',fontSize:10,fontWeight:900,padding:'4px 6px'}}>{title}</div>
+                <div style={{background:statsColor,color:'white',fontSize:6,fontWeight:700,padding:'4px 6px',display:'flex',alignItems:'center'}}>RESULTADOS</div>
               </div>
-              <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
+              <table style={{borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
                 <thead>
                   <tr>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'0.75cm'}}>POS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.35cm'}}>POS</th>
                     <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:4,width:'1.3cm'}}>JUGADOR</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'0.75cm'}}>PTS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'0.75cm'}}>JUG</th>
-                    <th style={{...cellTH,background:statsColor,width:'0.75cm'}}>3</th>
-                    <th style={{...cellTH,background:statsColor,width:'0.75cm'}}>1</th>
-                    <th style={{...cellTH,background:statsColor,width:'0.75cm'}}>0</th>
-                    <th style={{...cellTH,background:statsColor,width:'0.95cm'}}>%</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.35cm'}}>PTS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.35cm'}}>JUG</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.35cm'}}>3</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.35cm'}}>1</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.35cm'}}>0</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.35cm'}}>%</th>
                   </tr>
                 </thead>
                 <tbody>
