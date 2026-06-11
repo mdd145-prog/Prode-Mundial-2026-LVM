@@ -725,54 +725,54 @@ function AdminOffline(){
         const title=oficial?'TABLA OFICIAL':'TABLA NO OFICIAL'
         const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
         // Rows se reparten el alto disponible. Más jugadores = filas más finas.
-        // Escalado dinámico: cuanto más jugadores, más finas las filas para que TODOS entren en 9cm.
+        // Tabla 6cm × 9cm. Sin podio. JUGADOR 2cm, columnas numéricas 0.5cm cada una.
         const N=Math.max(1,board.length)
-        const availPx=255  // 9cm (~340px) - title (~30) - header (~20) - footer (~14) - bordes/safety
-        const rowH=Math.max(10,Math.floor(availPx/N))
-        const fSize=Math.max(7,Math.min(12,Math.floor(rowH*0.72)))
-        const fPts=Math.max(9,fSize+2)
-        const cellTH={padding:'3px 2px',fontSize:Math.max(7,Math.min(10,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
-        const cellTD={padding:'0 2px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden'}
+        // 9cm de alto menos title (~0.7cm) - header (~0.5cm) - footer (~0.4cm) = ~7.4cm = ~280px para filas
+        const availPx=280
+        const rowH=Math.max(8,Math.floor(availPx/N))
+        const fSize=Math.max(6,Math.min(11,Math.floor(rowH*0.7)))
+        const fPts=Math.max(8,fSize+1)
+        const cellTH={padding:'2px 1px',fontSize:Math.max(6,Math.min(9,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
+        const cellTD={padding:'0 1px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px',overflow:'hidden'}
         return(
           <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
-            <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'100%',maxWidth:'calc(100vw - 16px)'}}>
+            <div style={{width:'6cm',height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
               <div style={{display:'flex',background:hdrColor,flexShrink:0}}>
-                <div style={{flex:1,color:'white',fontSize:13,fontWeight:900,padding:'5px 10px'}}>{title}</div>
-                <div style={{background:statsColor,color:'white',fontSize:9,fontWeight:700,padding:'5px 10px',display:'flex',alignItems:'center'}}>RESULTADOS</div>
+                <div style={{flex:1,color:'white',fontSize:10,fontWeight:900,padding:'4px 6px'}}>{title}</div>
+                <div style={{background:statsColor,color:'white',fontSize:6,fontWeight:700,padding:'4px 6px',display:'flex',alignItems:'center'}}>RESULTADOS</div>
               </div>
               <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
                 <thead>
                   <tr>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'7%'}}>POS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:6}}>JUGADOR</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'11%'}}>PTS</th>
-                    <th style={{...cellTH,background:'#1a1a2e',width:'9%'}}>JUG</th>
-                    <th style={{...cellTH,background:statsColor,width:'8%'}}>3</th>
-                    <th style={{...cellTH,background:statsColor,width:'8%'}}>1</th>
-                    <th style={{...cellTH,background:statsColor,width:'8%'}}>0</th>
-                    <th style={{...cellTH,background:statsColor,width:'13%'}}>%</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.5cm'}}>POS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',textAlign:'left',paddingLeft:4,width:'2cm'}}>JUGADOR</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.5cm'}}>PTS</th>
+                    <th style={{...cellTH,background:'#1a1a2e',width:'0.5cm'}}>JUG</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.5cm'}}>3</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.5cm'}}>1</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.5cm'}}>0</th>
+                    <th style={{...cellTH,background:statsColor,width:'0.5cm'}}>%</th>
                   </tr>
                 </thead>
                 <tbody>
                   {board.map((p,i)=>{
                     const bg=i%2===0?'#d9d9d9':'#ffffff'
-                    const medal=i===0?'🏆':i===1?'🥈':i===2?'🥉':''
                     return(
                       <tr key={p.id} style={{background:bg,height:rowH+'px'}}>
                         <td style={{...cellTD,fontWeight:700,fontSize:fSize}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:6,fontWeight:700,fontSize:fSize+1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{medal?medal+' ':''}{p.name}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:4,fontWeight:700,fontSize:fSize,whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
                         <td style={{...cellTD,fontWeight:900,fontSize:fPts}}>{p.tot}</td>
                         <td style={{...cellTD,fontSize:fSize}}>{p.jug}</td>
                         <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.ex}</td>
                         <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.lv}</td>
                         <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.fail}</td>
-                        <td style={{...cellTD,fontSize:Math.max(6,fSize-1),color:'#444'}}>{p.pct}</td>
+                        <td style={{...cellTD,fontSize:Math.max(5,fSize-1),color:'#444'}}>{p.pct}</td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
-              <div style={{textAlign:'center',padding:'3px',fontSize:7,color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha} · {N} jugadores{oficial?'':' · NO OFICIAL'}</div>
+              <div style={{textAlign:'center',padding:'2px',fontSize:6,color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
             </div>
           </div>
         )
