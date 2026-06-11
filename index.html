@@ -591,10 +591,184 @@ function Admin(){
   )
 }
 
+// ── ADMIN OFFLINE ─────────────────────────────────────────
+// Admin local que NO toca Supabase. Importa una snapshot del #admin online (o pega JSON),
+// y desde ahí vos cargás los resultados a mano. Todo persistido en localStorage propio.
+function AdminOffline(){
+  const [pp,setPP]=useState(()=>LS.get('wc26off_p',[]))
+  const [mm,setMM]=useState(()=>{
+    const stored=LS.get('wc26off_m',null)
+    if(!stored||stored.length!==MATCHES.length)return MATCHES
+    return MATCHES.map((m,i)=>({...m,s1:stored[i]?.s1??null,s2:stored[i]?.s2??null}))
+  })
+  const [rr,setRR]=useState(()=>LS.get('wc26off_r',{}))
+  const [ts,setTs]=useState(()=>LS.get('wc26off_ts',null))
+  const [tab,setTab]=useState('tabla')
+  const [dayFilter,setDayFilter]=useState('')
+  const [importTxt,setImportTxt]=useState('')
+  const [toast,setToast]=useState(null)
+  const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
+
+  const board=buildBoard(pp,mm,rr)
+  const played=mm.filter(m=>m.s1!==null).length
+  const noData=!pp.length
+
+  const importFromOnline=()=>{
+    const onlineP=LS.get('wc26p',[])
+    const onlineM=LS.get('wc26m',null)
+    const onlineR=LS.get('wc26r',{})
+    if(!onlineP.length){showToast('No hay datos del admin online en este dispositivo','#e74c3c');return}
+    const newMM=onlineM?MATCHES.map((m,i)=>({...m,s1:onlineM[i]?.s1??null,s2:onlineM[i]?.s2??null})):MATCHES
+    const now=new Date().toISOString()
+    setPP(onlineP);LS.set('wc26off_p',onlineP)
+    setMM(newMM);LS.set('wc26off_m',newMM)
+    setRR(onlineR);LS.set('wc26off_r',onlineR)
+    setTs(now);LS.set('wc26off_ts',now)
+    showToast(`✓ ${onlineP.length} jugadores cargados`)
+  }
+
+  const importFromJSON=()=>{
+    try{
+      const data=JSON.parse(importTxt.trim())
+      if(!Array.isArray(data.jugadores)||!Array.isArray(data.partidos)||typeof data.pronosticos!=='object')throw new Error('bad')
+      const newPP=data.jugadores
+      const newMM=MATCHES.map(m=>{const d=data.partidos.find(p=>p.id===m.id);return{...m,s1:d?.s1??null,s2:d?.s2??null}})
+      const newRR=data.pronosticos
+      const now=new Date().toISOString()
+      setPP(newPP);LS.set('wc26off_p',newPP)
+      setMM(newMM);LS.set('wc26off_m',newMM)
+      setRR(newRR);LS.set('wc26off_r',newRR)
+      setTs(now);LS.set('wc26off_ts',now)
+      setImportTxt('')
+      showToast(`✓ ${newPP.length} jugadores cargados`)
+    }catch(e){showToast('JSON inválido','#e74c3c')}
+  }
+
+  const exportJSON=()=>{
+    const data={exportedAt:new Date().toISOString(),jugadores:pp,partidos:mm.map(m=>({id:m.id,s1:m.s1,s2:m.s2})),pronosticos:rr}
+    const json=JSON.stringify(data)
+    if(navigator.clipboard?.writeText){navigator.clipboard.writeText(json).then(()=>showToast('✓ JSON copiado'))}
+    else{prompt('Copiá este JSON:',json)}
+  }
+
+  const updateResult=(mid,f,v)=>{
+    const newV=v===''?null:Math.max(0,Math.min(20,parseInt(v)||0))
+    const newMM=mm.map(m=>m.id===mid?{...m,[f]:newV}:m)
+    setMM(newMM);LS.set('wc26off_m',newMM)
+  }
+
+  const clearAll=()=>{
+    if(!confirm('¿Borrar TODOS los datos offline? Esta acción no se puede deshacer.'))return
+    localStorage.removeItem('wc26off_p');localStorage.removeItem('wc26off_m')
+    localStorage.removeItem('wc26off_r');localStorage.removeItem('wc26off_ts')
+    setPP([]);setMM(MATCHES);setRR({});setTs(null);setTab('tabla')
+    showToast('✓ Datos borrados')
+  }
+
+  const days=[...new Set(MATCHES.map(m=>m.date))].sort()
+  const matchesByDay=days.map(d=>({date:d,matches:mm.filter(m=>m.date===d).sort((a,b)=>a.time.localeCompare(b.time))}))
+  const si={width:42,textAlign:'center',background:'#fff8e8',border:'1px solid #d4b890',borderRadius:6,color:'#1a1a2e',fontSize:16,fontWeight:700,padding:'4px 2px',outline:'none',WebkitTextFillColor:'#1a1a2e'}
+  const fmtTs=t=>t?new Date(t).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'
+
+  return(
+    <div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:430,margin:'0 auto',paddingBottom:72}}>
+      <div style={{background:'linear-gradient(135deg,#1a6b8a,#0d4a5e)',padding:'12px 16px 10px',textAlign:'center',position:'sticky',top:0,zIndex:50}}>
+        <div style={{fontSize:16,fontWeight:800,color:'#f0c030',letterSpacing:1}}>⚽ PRODE 2026 — OFFLINE</div>
+        <div style={{fontSize:10,color:'#ddd',marginTop:1}}>{noData?'Sin datos · Importá para empezar':`${pp.length} jugadores · ${played}/72 · ${fmtTs(ts)}`}</div>
+      </div>
+
+      {toast&&<div style={{position:'fixed',top:80,left:'50%',transform:'translateX(-50%)',background:toast.color,color:'white',padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,zIndex:200,boxShadow:'0 2px 8px rgba(0,0,0,0.2)'}}>{toast.msg}</div>}
+
+      {noData?(
+        <div style={{padding:'20px 14px'}}>
+          <div style={{background:'#ffffff',borderRadius:12,padding:16,marginBottom:12,border:'1px solid #e0e4ea'}}>
+            <div style={{fontSize:14,fontWeight:700,marginBottom:8}}>📥 Cargar datos</div>
+            <div style={{fontSize:12,color:'#666',marginBottom:12,lineHeight:1.5}}>Este admin no toca Supabase. Importá una snapshot del admin online (necesita conexión la primera vez) o pegá un JSON exportado.</div>
+            <button onClick={importFromOnline} style={{width:'100%',padding:12,background:'#1a6b8a',border:'none',borderRadius:10,color:'white',fontWeight:700,fontSize:14,cursor:'pointer',marginBottom:12}}>🔄 Cargar del admin online de este dispositivo</button>
+            <div style={{fontSize:11,color:'#888',marginBottom:6}}>O pegá JSON exportado:</div>
+            <textarea value={importTxt} onChange={e=>setImportTxt(e.target.value)} placeholder='{"jugadores":[...],"partidos":[...],"pronosticos":{...}}' style={{width:'100%',height:80,padding:8,borderRadius:8,border:'1px solid #e0e4ea',background:'#f8f9fa',color:'#1a1a2e',fontSize:11,fontFamily:'monospace',outline:'none',resize:'none',marginBottom:6}}/>
+            <button onClick={importFromJSON} disabled={!importTxt.trim()} style={{width:'100%',padding:10,background:importTxt.trim()?'#6a0dad':'#ccc',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:importTxt.trim()?'pointer':'not-allowed'}}>Importar JSON</button>
+          </div>
+        </div>
+      ):tab==='tabla'?(
+        <div style={{padding:'12px 12px 0'}}>
+          <div style={{background:'#ffffff',borderRadius:12,padding:'12px 0 4px',border:'1px solid #e0e4ea'}}>
+            <div style={{padding:'0 14px 8px',fontSize:13,fontWeight:700,color:'#1a6b8a'}}>🏆 Tabla de posiciones</div>
+            {board.map((p,i)=>(
+              <div key={p.id} style={{display:'flex',alignItems:'center',padding:'10px 14px',background:i%2===0?'#f8f9fa':'#fff',borderBottom:'1px solid #f0f0f0'}}>
+                <div style={{width:24,fontWeight:800,color:i===0?'#f0c030':'#666',fontSize:14}}>{i+1}</div>
+                <div style={{flex:1,fontWeight:600,fontSize:13}}>{p.name}</div>
+                <div style={{textAlign:'right',marginRight:10}}><span style={{fontSize:18,fontWeight:900,color:'#6a0dad'}}>{p.tot}</span><span style={{fontSize:10,color:'#888',marginLeft:2}}>pts</span></div>
+                <div style={{fontSize:10,color:'#666',minWidth:62,textAlign:'right'}}>⚡{p.ex} 📈{p.lv} ❌{p.fail}</div>
+              </div>
+            ))}
+            {!board.length&&<div style={{padding:'20px 14px',textAlign:'center',color:'#999',fontSize:13}}>Sin jugadores</div>}
+          </div>
+        </div>
+      ):tab==='partidos'?(
+        <div style={{padding:'12px 12px 0'}}>
+          <div style={{display:'flex',gap:4,overflowX:'auto',paddingBottom:8,marginBottom:8}}>
+            <button onClick={()=>setDayFilter('')} style={{padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:!dayFilter?'#1a6b8a':'#ebebeb',color:!dayFilter?'white':'#555'}}>Todos</button>
+            {days.map(d=><button key={d} onClick={()=>setDayFilter(d)} style={{padding:'4px 10px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:600,whiteSpace:'nowrap',background:dayFilter===d?'#1a6b8a':'#ebebeb',color:dayFilter===d?'white':'#555'}}>{fmtDate(d)}</button>)}
+          </div>
+          {matchesByDay.filter(g=>!dayFilter||g.date===dayFilter).map(g=>(
+            <div key={g.date} style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#1a6b8a',padding:'4px 4px',textTransform:'uppercase'}}>{fmtDate(g.date)}</div>
+              {g.matches.map(m=>(
+                <div key={m.id} style={{background:'#ffffff',borderRadius:10,padding:'8px 12px',marginBottom:6,border:`1px solid ${m.s1!==null?'#27ae60':'#e0e4ea'}`}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{flex:1,textAlign:'right',fontSize:13,fontWeight:500}}>{m.t1}</span>
+                    <input type="number" inputMode="numeric" value={m.s1??''} min="0" max="20" onChange={e=>updateResult(m.id,'s1',e.target.value)} style={si}/>
+                    <span style={{color:'#aaa',fontWeight:700}}>-</span>
+                    <input type="number" inputMode="numeric" value={m.s2??''} min="0" max="20" onChange={e=>updateResult(m.id,'s2',e.target.value)} style={si}/>
+                    <span style={{flex:1,fontSize:13,fontWeight:500}}>{m.t2}</span>
+                  </div>
+                  <div style={{textAlign:'center',fontSize:9,color:'#888',marginTop:2}}>{m.time} · G{m.g}</div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      ):tab==='datos'?(
+        <div style={{padding:'14px'}}>
+          <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>🔄 Refrescar desde admin online</div>
+            <div style={{fontSize:11,color:'#666',marginBottom:8}}>Pisa los datos offline con la última snapshot del admin online de este dispositivo.</div>
+            <button onClick={importFromOnline} style={{width:'100%',padding:10,background:'#1a6b8a',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>Cargar del admin online</button>
+          </div>
+          <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>📤 Exportar JSON</div>
+            <div style={{fontSize:11,color:'#666',marginBottom:8}}>Copia el estado actual al portapapeles (backup).</div>
+            <button onClick={exportJSON} style={{width:'100%',padding:10,background:'#6a0dad',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>Copiar JSON</button>
+          </div>
+          <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>📥 Importar JSON</div>
+            <textarea value={importTxt} onChange={e=>setImportTxt(e.target.value)} placeholder='Pegá un JSON exportado' style={{width:'100%',height:60,padding:8,borderRadius:8,border:'1px solid #e0e4ea',background:'#f8f9fa',color:'#1a1a2e',fontSize:11,fontFamily:'monospace',outline:'none',resize:'none',marginBottom:6}}/>
+            <button onClick={importFromJSON} disabled={!importTxt.trim()} style={{width:'100%',padding:10,background:importTxt.trim()?'#6a0dad':'#ccc',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:importTxt.trim()?'pointer':'not-allowed'}}>Importar</button>
+          </div>
+          <div style={{background:'#fff5f5',borderRadius:12,padding:14,border:'1px solid #ffc7ce'}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:6,color:'#c0392b'}}>🗑 Borrar datos offline</div>
+            <button onClick={clearAll} style={{width:'100%',padding:10,background:'#c0392b',border:'none',borderRadius:8,color:'white',fontWeight:700,fontSize:13,cursor:'pointer'}}>Borrar todo</button>
+          </div>
+        </div>
+      ):null}
+
+      {!noData&&(
+        <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#ffffff',borderTop:'1px solid #dde3ec',display:'flex',zIndex:100}}>
+          {[['tabla','🏆','Tabla'],['partidos','⚽','Partidos'],['datos','⚙️','Datos']].map(([id,ic,la])=>(
+            <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:'8px 1px 6px',background:'transparent',border:'none',cursor:'pointer',color:tab===id?'#1a6b8a':'#aaa',display:'flex',flexDirection:'column',alignItems:'center',gap:1,fontSize:10,fontWeight:tab===id?700:400}}><span style={{fontSize:18}}>{ic}</span>{la}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function App(){
   const [hash,setHash]=useState(window.location.hash)
   useEffect(()=>{const h=()=>setHash(window.location.hash);window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h)},[])
   if(hash==='#admin'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <Admin/>;return <PinGate/>}
+  if(hash==='#admin2'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <AdminOffline/>;return <PinGate/>}
   return <Jugador/>
 }
 
