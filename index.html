@@ -729,14 +729,14 @@ function AdminOffline(){
         const cm=n=>(n*100/6).toFixed(2)+'vw'
         const N=Math.max(1,board.length)
         const rowH=cm((9-1.4)/N)
-        const cellTH={padding:'0.4vw 0.2vw',color:'white',textAlign:'center',lineHeight:1,fontWeight:400,fontSize:cm(0.22)}
-        const cellTD={padding:'0 0.2vw',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH,overflow:'hidden',fontWeight:400,fontSize:cm(0.25)}
+        const cellTH={padding:'0.4vw 0.2vw',color:'white',textAlign:'center',lineHeight:1,fontWeight:400,fontSize:cm(0.178)}
+        const cellTD={padding:'0 0.2vw',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH,overflow:'hidden',fontWeight:400,fontSize:cm(0.203)}
         return(
-          <div style={{padding:cm(2)+' 0 10px',display:'flex',justifyContent:'center'}}>
+          <div style={{padding:cm(1)+' 0 10px',display:'flex',justifyContent:'center'}}>
             <div style={{height:cm(9),width:cm(5.35),display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
               <div style={{display:'flex',background:hdrColor,flexShrink:0}}>
-                <div style={{flex:1,color:'white',fontSize:cm(0.38),fontWeight:900,padding:cm(0.13)+' '+cm(0.18)}}>{title}</div>
-                <div style={{background:statsColor,color:'white',fontSize:cm(0.22),fontWeight:700,padding:cm(0.13)+' '+cm(0.18),display:'flex',alignItems:'center'}}>RESULTADOS</div>
+                <div style={{flex:1,color:'white',fontSize:cm(0.308),fontWeight:900,padding:cm(0.13)+' '+cm(0.18)}}>{title}</div>
+                <div style={{background:statsColor,color:'white',fontSize:cm(0.178),fontWeight:700,padding:cm(0.13)+' '+cm(0.18),display:'flex',alignItems:'center'}}>RESULTADOS</div>
               </div>
               <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
                 <thead>
@@ -757,19 +757,19 @@ function AdminOffline(){
                     return(
                       <tr key={p.id} style={{background:bg,height:rowH}}>
                         <td style={{...cellTD}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:cm(0.08),fontSize:cm(0.28),whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
-                        <td style={{...cellTD,fontSize:cm(0.32)}}>{p.tot}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:cm(0.08),fontSize:cm(0.227),whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{p.name}</td>
+                        <td style={{...cellTD,fontSize:cm(0.259)}}>{p.tot}</td>
                         <td style={{...cellTD}}>{p.jug}</td>
                         <td style={{...cellTD,color:'#1a6b2e'}}>{p.ex}</td>
                         <td style={{...cellTD,color:'#1a6b2e'}}>{p.lv}</td>
                         <td style={{...cellTD,color:'#1a6b2e'}}>{p.fail}</td>
-                        <td style={{...cellTD,fontSize:cm(0.2),color:'#444'}}>{p.pct}</td>
+                        <td style={{...cellTD,fontSize:cm(0.162),color:'#444'}}>{p.pct}</td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
-              <div style={{textAlign:'center',padding:cm(0.06),fontSize:cm(0.16),color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
+              <div style={{textAlign:'center',padding:cm(0.06),fontSize:cm(0.13),color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
             </div>
           </div>
         )
