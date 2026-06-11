@@ -117,6 +117,9 @@ const calcPts=(pred,match)=>{
 const toNum=v=>v===''?null:Math.max(0,Math.min(20,parseInt(v)||0))
 const LS={get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}}
 const fmtDate=iso=>new Date(iso+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})
+const hoyARG=()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Argentina/Buenos_Aires'})
+const ABBR_MAP={'México':'MEX','Sudáfrica':'RSA','Rep. de Corea':'KOR','Rep. Checa':'CHE','Canadá':'CAN','Bosnia Herz.':'BIH','Catar':'QAT','Suiza':'SUI','Brasil':'BRA','Marruecos':'MAR','Haití':'HAI','Escocia':'SCO','Estados Unidos':'USA','Paraguay':'PAR','Australia':'AUS','Turquía':'TUR','Alemania':'ALE','Curazao':'CUW','Costa de Marfil':'CIV','Ecuador':'ECU','Países Bajos':'HOL','Japón':'JPN','Suecia':'SUE','Túnez':'TUN','Bélgica':'BEL','Egipto':'EGI','Irán':'IRN','Nueva Zelanda':'NZL','España':'ESP','Cabo Verde':'CPV','Arabia Saudí':'KSA','Uruguay':'URU','Francia':'FRA','Senegal':'SEN','Noruega':'NOR','Irak':'IRQ','Argentina':'ARG','Argelia':'ALG','Austria':'AUT','Jordania':'JOR','Portugal':'POR','Colombia':'COL','Uzbekistán':'UZB','RD Congo':'COD','Inglaterra':'ING','Croacia':'CRO','Ghana':'GHA','Panamá':'PAN'}
+const abbr=n=>ABBR_MAP[n]||n.slice(0,3).toUpperCase()
 
 function buildBoard(pp,mm,rr){
   return pp.map(p=>{
@@ -128,7 +131,7 @@ function buildBoard(pp,mm,rr){
       if(p2===3)ex++;else if(p2===1)lv++;else fail++
     }
     const done=Object.values(rr[p.id]||{}).filter(x=>x&&x.s1!==null&&x.s2!==null).length
-    const pct=jug>0?(((ex+lv)/jug)*100).toFixed(2)+'%':'-'
+    const pct=jug>0?((tot/(jug*3))*100).toFixed(2)+'%':'-'
     return{...p,tot,ex,lv,fail,jug,done,pct}
   }).sort((a,b)=>b.tot-a.tot)
 }
@@ -158,8 +161,7 @@ function exportPDF(board,oficial){
 function exportAllPredictions(pp,mm,rr){
   if(!pp.length){alert('No hay jugadores');return}
   const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
-  const AB={'México':'MEX','Sudáfrica':'RSA','Rep. de Corea':'KOR','Rep. Checa':'CHE','Canadá':'CAN','Bosnia Herz.':'BIH','Catar':'QAT','Suiza':'SUI','Brasil':'BRA','Marruecos':'MAR','Haití':'HAI','Escocia':'SCO','Estados Unidos':'USA','Paraguay':'PAR','Australia':'AUS','Turquía':'TUR','Alemania':'ALE','Curazao':'CUW','Costa de Marfil':'CIV','Ecuador':'ECU','Países Bajos':'HOL','Japón':'JPN','Suecia':'SUE','Túnez':'TUN','Bélgica':'BEL','Egipto':'EGI','Irán':'IRN','Nueva Zelanda':'NZL','España':'ESP','Cabo Verde':'CPV','Arabia Saudí':'KSA','Uruguay':'URU','Francia':'FRA','Senegal':'SEN','Noruega':'NOR','Irak':'IRQ','Argentina':'ARG','Argelia':'ALG','Austria':'AUT','Jordania':'JOR','Portugal':'POR','Colombia':'COL','Uzbekistán':'UZB','RD Congo':'COD','Inglaterra':'ING','Croacia':'CRO','Ghana':'GHA','Panamá':'PAN'}
-  const ab=n=>AB[n]||n.slice(0,3).toUpperCase()
+  const ab=abbr
   const pHead=pp.map(p=>`<th class="vp"><div>${p.name.length>11?p.name.slice(0,11)+'…':p.name}</div></th>`).join('')
   let prevG=''
   const rows=mm.map(m=>{
@@ -797,7 +799,61 @@ function AdminOffline(){
             </div>
           ))}
         </div>
-      ):tab==='datos'?(
+      ):tab==='hoy'?(()=>{
+        const HOY=hoyARG()
+        const dayMatches=mm.filter(m=>m.date===HOY).sort((a,b)=>(a.time||'').localeCompare(b.time||''))
+        if(!dayMatches.length)return(<div style={{padding:'50px 20px',textAlign:'center',color:'#666'}}><div style={{fontSize:42,marginBottom:10}}>📅</div><div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Sin partidos hoy</div><div style={{fontSize:12,color:'#999'}}>{fmtDate(HOY)}</div></div>)
+        // Mismas medidas cm-based que la tabla oficial. 5.55cm x 9cm. iPhone 15 Pro = 6cm físicos.
+        const cm=n=>`min(${(n*0.9*100/6).toFixed(2)}vw, ${(n*0.9*430/6).toFixed(2)}px)`
+        const N=Math.max(1,pp.length)
+        const nM=dayMatches.length
+        // Alturas fijas: title 0.4 + (date+ctry) 0.9 + result 0.4 + footer 0.3 = 2.0cm → quedan 7cm para filas
+        const rowH=cm(7/N)
+        const sideW=cm(1.0)
+        const matchW=cm(4.55/nM)
+        const cellTH={color:'white',textAlign:'center',lineHeight:1,fontWeight:700,fontSize:cm(0.17)}
+        const cellTD={textAlign:'center',borderBottom:'1px solid #ddd',lineHeight:1,height:rowH,overflow:'hidden',fontWeight:400,fontSize:cm(0.18),padding:'0 '+cm(0.04)}
+        return(
+          <div style={{padding:cm(1)+' 0 10px',display:'flex',justifyContent:'center'}}>
+            <div style={{height:cm(9),width:cm(5.55),display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222'}}>
+              <div style={{background:'#3d0070',color:'white',textAlign:'center',padding:cm(0.1),fontSize:cm(0.22),fontWeight:900,letterSpacing:cm(0.08),flexShrink:0}}>R E S U L T A D O S</div>
+              <table style={{width:'100%',borderCollapse:'collapse',flex:1,tableLayout:'fixed'}}>
+                <thead>
+                  <tr>
+                    <th rowSpan={2} style={{background:'#f0e8ff',color:'#3d0070',fontSize:cm(0.2),fontWeight:900,padding:cm(0.04),width:sideW}}>{fmtDate(HOY).toUpperCase()}</th>
+                    {dayMatches.map(m=>(<th key={m.id+'h'} style={{...cellTH,background:'#7c3aed',width:matchW,padding:cm(0.04)}}>{abbr(m.t1)}</th>))}
+                  </tr>
+                  <tr>
+                    {dayMatches.map(m=>(<th key={m.id+'a'} style={{...cellTH,background:'#6d28d9',padding:cm(0.04)}}>{abbr(m.t2)}</th>))}
+                  </tr>
+                  <tr>
+                    <th style={{background:'#ddd0f5',color:'#3d0070',fontSize:cm(0.16),fontWeight:900,textAlign:'left',paddingLeft:cm(0.1),padding:cm(0.06)+' '+cm(0.1)}}>RESULTADO</th>
+                    {dayMatches.map(m=>(<th key={m.id+'r'} style={{background:'#ddd0f5',color:'#3d0070',fontSize:cm(0.21),fontWeight:900,textAlign:'center',padding:cm(0.06)+' 0'}}>{m.s1!==null&&m.s2!==null?`${m.s1}-${m.s2}`:'-'}</th>))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pp.map((jug,ji)=>{
+                    const bg=ji%2===0?'#ebebeb':'#ffffff'
+                    const nombre=(jug.name||'').toUpperCase()
+                    const disp=nombre.length>9?nombre.slice(0,9)+'…':nombre
+                    return(
+                      <tr key={jug.id} style={{background:bg,height:rowH}}>
+                        <td style={{...cellTD,textAlign:'left',color:'#1a1a1a',fontWeight:600,paddingLeft:cm(0.08),whiteSpace:'nowrap'}}>{String(ji+1).padStart(2,'0')} {disp}</td>
+                        {dayMatches.map(m=>{
+                          const pred=(rr[jug.id]||{})[m.id]
+                          const txt=pred&&pred.s1!==null&&pred.s1!==undefined&&pred.s2!==null&&pred.s2!==undefined?`${pred.s1}-${pred.s2}`:'-'
+                          return(<td key={m.id} style={cellTD}>{txt}</td>)
+                        })}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div style={{textAlign:'center',padding:cm(0.06),fontSize:cm(0.13),color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+            </div>
+          </div>
+        )
+      })():tab==='datos'?(
         <div style={{padding:'14px'}}>
           <div style={{background:'#ffffff',borderRadius:12,padding:14,marginBottom:10,border:'1px solid #e0e4ea'}}>
             <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>🔄 Refrescar desde Supabase</div>
@@ -829,7 +885,7 @@ function AdminOffline(){
 
       {!noData&&(
         <div style={{position:'fixed',bottom:0,left:'50%',transform:'translateX(-50%)',width:'100%',maxWidth:430,background:'#ffffff',borderTop:'1px solid #dde3ec',display:'flex',zIndex:100}}>
-          {[['oficial','🏆','Oficial'],['nooficial','📊','No Of.'],['partidos','⚽','Partidos'],['datos','⚙️','Datos']].map(([id,ic,la])=>(
+          {[['oficial','🏆','Oficial'],['nooficial','📊','No Of.'],['hoy','📅','Hoy'],['partidos','⚽','Partidos'],['datos','⚙️','Datos']].map(([id,ic,la])=>(
             <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:'8px 1px 6px',background:'transparent',border:'none',cursor:'pointer',color:tab===id?'#1a6b8a':'#aaa',display:'flex',flexDirection:'column',alignItems:'center',gap:1,fontSize:10,fontWeight:tab===id?700:400}}><span style={{fontSize:18}}>{ic}</span>{la}</button>
           ))}
         </div>
