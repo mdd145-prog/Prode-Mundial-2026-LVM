@@ -725,8 +725,14 @@ function AdminOffline(){
         const title=oficial?'TABLA OFICIAL':'TABLA NO OFICIAL'
         const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})
         // Rows se reparten el alto disponible. Más jugadores = filas más finas.
-        const cellTH={padding:'3px 2px',fontSize:9,fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
-        const cellTD={padding:'2px',textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1.1}
+        // Escalado dinámico: cuanto más jugadores, más finas las filas para que TODOS entren en 9cm.
+        const N=Math.max(1,board.length)
+        const availPx=290  // ~9cm menos title + header + footer
+        const rowH=Math.max(10,Math.floor(availPx/N))
+        const fSize=Math.max(7,Math.min(13,rowH-3))
+        const fPts=Math.max(9,fSize+2)
+        const cellTH={padding:'3px 2px',fontSize:Math.max(7,Math.min(10,fSize-1)),fontWeight:700,color:'white',textAlign:'center',lineHeight:1}
+        const cellTD={padding:0,textAlign:'center',borderBottom:'1px solid #ccc',lineHeight:1,height:rowH+'px'}
         return(
           <div style={{padding:'10px 0',display:'flex',justifyContent:'center'}}>
             <div style={{height:'9cm',display:'flex',flexDirection:'column',border:'2px solid #333',borderRadius:4,overflow:'hidden',fontFamily:'Arial,sans-serif',background:'white',color:'#222',width:'100%',maxWidth:'calc(100vw - 16px)'}}>
@@ -752,21 +758,21 @@ function AdminOffline(){
                     const bg=i%2===0?'#d9d9d9':'#ffffff'
                     const medal=i===0?'🏆':i===1?'🥈':i===2?'🥉':''
                     return(
-                      <tr key={p.id} style={{background:bg}}>
-                        <td style={{...cellTD,fontWeight:700,fontSize:11}}>{i+1}</td>
-                        <td style={{...cellTD,textAlign:'left',paddingLeft:6,fontWeight:700,fontSize:12,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{medal?medal+' ':''}{p.name}</td>
-                        <td style={{...cellTD,fontWeight:900,fontSize:14}}>{p.tot}</td>
-                        <td style={{...cellTD,fontSize:11}}>{p.jug}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:11}}>{p.ex}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:11}}>{p.lv}</td>
-                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:11}}>{p.fail}</td>
-                        <td style={{...cellTD,fontSize:10,color:'#444'}}>{p.pct}</td>
+                      <tr key={p.id} style={{background:bg,height:rowH+'px'}}>
+                        <td style={{...cellTD,fontWeight:700,fontSize:fSize}}>{i+1}</td>
+                        <td style={{...cellTD,textAlign:'left',paddingLeft:6,fontWeight:700,fontSize:fSize+1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{medal?medal+' ':''}{p.name}</td>
+                        <td style={{...cellTD,fontWeight:900,fontSize:fPts}}>{p.tot}</td>
+                        <td style={{...cellTD,fontSize:fSize}}>{p.jug}</td>
+                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.ex}</td>
+                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.lv}</td>
+                        <td style={{...cellTD,fontWeight:700,color:'#1a6b2e',fontSize:fSize}}>{p.fail}</td>
+                        <td style={{...cellTD,fontSize:Math.max(6,fSize-1),color:'#444'}}>{p.pct}</td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
-              <div style={{textAlign:'center',padding:'3px',fontSize:7,color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha}{oficial?'':' · NO OFICIAL'}</div>
+              <div style={{textAlign:'center',padding:'3px',fontSize:7,color:'#888',borderTop:'1px solid #ddd',flexShrink:0}}>PRODE MUNDIAL 2026 · {fecha} · {N} jugadores{oficial?'':' · NO OFICIAL'}</div>
             </div>
           </div>
         )
