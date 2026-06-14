@@ -596,7 +596,9 @@ function Admin(){
 // ── ADMIN OFFLINE ─────────────────────────────────────────
 // Admin local que NO toca Supabase. Importa una snapshot del #admin online (o pega JSON),
 // y desde ahí vos cargás los resultados a mano. Todo persistido en localStorage propio.
-function AdminOffline(){
+const ARNALDO_PREDS={m1:{s1:1,s2:0},m2:{s1:1,s2:0},m3:{s1:1,s2:0},m4:{s1:2,s2:0},m5:{s1:0,s2:1},m6:{s1:2,s2:0},m7:{s1:0,s2:2},m8:{s1:1,s2:0},m9:{s1:2,s2:0},m10:{s1:1,s2:0},m11:{s1:0,s2:1},m12:{s1:1,s2:0},m13:{s1:2,s2:0},m14:{s1:1,s2:0},m15:{s1:0,s2:1},m16:{s1:1,s2:0},m17:{s1:1,s2:0},m18:{s1:0,s2:2},m19:{s1:1,s2:0},m20:{s1:1,s2:0},m21:{s1:1,s2:0},m22:{s1:1,s2:0},m23:{s1:1,s2:0},m24:{s1:0,s2:1},m25:{s1:1,s2:0},m26:{s1:1,s2:0},m27:{s1:1,s2:0},m28:{s1:1,s2:0},m29:{s1:1,s2:0},m30:{s1:0,s2:1},m31:{s1:2,s2:0},m32:{s1:1,s2:0},m33:{s1:1,s2:0},m34:{s1:1,s2:0},m35:{s1:1,s2:0},m36:{s1:0,s2:1},m37:{s1:2,s2:0},m38:{s1:1,s2:0},m39:{s1:1,s2:0},m40:{s1:0,s2:1},m41:{s1:1,s2:0},m42:{s1:2,s2:0},m43:{s1:1,s2:0},m44:{s1:0,s2:1},m45:{s1:2,s2:0},m46:{s1:1,s2:0},m47:{s1:0,s2:1},m48:{s1:1,s2:0},m49:{s1:1,s2:0},m50:{s1:1,s2:0},m51:{s1:0,s2:1},m52:{s1:1,s2:0},m53:{s1:0,s2:1},m54:{s1:0,s2:1},m55:{s1:0,s2:2},m56:{s1:0,s2:1},m57:{s1:1,s2:0},m58:{s1:0,s2:1},m59:{s1:0,s2:1},m60:{s1:1,s2:0},m61:{s1:0,s2:1},m62:{s1:1,s2:0},m63:{s1:1,s2:0},m64:{s1:0,s2:1},m65:{s1:1,s2:0},m66:{s1:0,s2:1},m67:{s1:0,s2:2},m68:{s1:1,s2:0},m69:{s1:0,s2:1},m70:{s1:1,s2:0},m71:{s1:0,s2:1},m72:{s1:0,s2:2}}
+const ARN_PLAYER={id:'arnaldo',name:'🤖 Arnaldo',orden:999}
+function AdminOffline({withArnaldo}){
   const [pp,setPP]=useState(()=>LS.get('wc26off_p',[]))
   const [mm,setMM]=useState(()=>{
     const stored=LS.get('wc26off_m',null)
@@ -615,7 +617,9 @@ function AdminOffline(){
   const [fetchErr,setFetchErr]=useState(null)
   const showToast=(msg,color='#27ae60')=>{setToast({msg,color});setTimeout(()=>setToast(null),2500)}
 
-  const board=buildBoard(pp,mm,rr)
+  const PP=withArnaldo?[...pp,ARN_PLAYER]:pp
+  const RR=withArnaldo?{...rr,arnaldo:ARNALDO_PREDS}:rr
+  const board=buildBoard(PP,mm,RR)
   const played=mm.filter(m=>m.s1!==null).length
   const noData=!pp.length
 
@@ -649,6 +653,11 @@ function AdminOffline(){
 
   // Si no hay datos cacheados al abrir, baja automáticamente de Supabase.
   useEffect(()=>{if(noData&&!loading&&!fetchErr)fetchFromSupabase()},[])
+
+  // Auto-actualización de resultados desde Supabase (al abrir y cada 60s). Solo agrega
+  // resultados que YA existen en Supabase; nunca borra los que tengas cargados a mano.
+  const syncResults=async()=>{try{const {data}=await sb.from('partidos').select('id,goles1,goles2');if(!data)return;setMM(prev=>{const nm=prev.map(m=>{const db=data.find(p=>p.id===m.id);return db&&db.goles1!=null?{...m,s1:db.goles1,s2:db.goles2}:m});LS.set('wc26off_m',nm);return nm})}catch(e){}}
+  useEffect(()=>{syncResults();const t=setInterval(syncResults,60000);return()=>clearInterval(t)},[])
 
   const importFromJSON=()=>{
     try{
@@ -697,7 +706,7 @@ function AdminOffline(){
     <div style={{minHeight:'100vh',background:'#f0f2f5',color:'#1a1a2e',maxWidth:430,margin:'0 auto',paddingBottom:72}}>
       <div style={{background:'linear-gradient(135deg,#1a6b8a,#0d4a5e)',padding:'12px 16px 10px',textAlign:'center',position:'sticky',top:0,zIndex:50}}>
         <div style={{fontSize:16,fontWeight:800,color:'#f0c030',letterSpacing:1}}>⚽ PRODE 2026 — OFFLINE</div>
-        <div style={{fontSize:10,color:'#ddd',marginTop:1}}>{noData?'Sin datos · Importá para empezar':`${pp.length} jugadores · ${played}/72 · ${fmtTs(ts)}`}</div>
+        <div style={{fontSize:10,color:'#ddd',marginTop:1}}>{noData?'Sin datos · Importá para empezar':`${PP.length} jugadores · ${played}/72 · ${fmtTs(ts)}`}</div>
       </div>
 
       {toast&&<div style={{position:'fixed',top:80,left:'50%',transform:'translateX(-50%)',background:toast.color,color:'white',padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,zIndex:200,boxShadow:'0 2px 8px rgba(0,0,0,0.2)'}}>{toast.msg}</div>}
@@ -808,15 +817,15 @@ function AdminOffline(){
         const match=mm.find(m=>m.id===anaMatchId)||defaultMatch
         if(!match)return(<div style={{padding:30,textAlign:'center',color:'#666'}}>Sin partidos</div>)
         const grupos={}
-        for(const p of pp){
-          const pr=(rr[p.id]||{})[match.id]
+        for(const p of PP){
+          const pr=(RR[p.id]||{})[match.id]
           if(!pr||pr.s1===null||pr.s1===undefined||pr.s2===null||pr.s2===undefined)continue
           const key=`${pr.s1}-${pr.s2}`
           if(!grupos[key])grupos[key]=[]
           grupos[key].push(p.name)
         }
         const ordenados=Object.entries(grupos).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]))
-        const sinPron=pp.filter(p=>{const pr=(rr[p.id]||{})[match.id];return !pr||pr.s1==null||pr.s2==null})
+        const sinPron=PP.filter(p=>{const pr=(RR[p.id]||{})[match.id];return !pr||pr.s1==null||pr.s2==null})
         const resultadoReal=match.s1!==null?`${match.s1}-${match.s2}`:null
         const tendReal=resultadoReal?(match.s1>match.s2?'H':match.s1<match.s2?'A':'D'):null
         const tendOf=m=>{const[a,b]=m.split('-').map(Number);return a>b?'H':a<b?'A':'D'}
@@ -883,7 +892,7 @@ function AdminOffline(){
         if(!dayMatches.length)return(<div style={{padding:'50px 20px',textAlign:'center',color:'#666'}}><div style={{fontSize:42,marginBottom:10}}>📅</div><div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Sin partidos hoy</div><div style={{fontSize:12,color:'#999'}}>{fmtDate(HOY)}</div></div>)
         // Mismas medidas cm-based que la tabla oficial. 5.55cm x 9cm. iPhone 15 Pro = 6cm físicos.
         const cm=n=>`min(${(n*0.9*100/6).toFixed(2)}vw, ${(n*0.9*430/6).toFixed(2)}px)`
-        const N=Math.max(1,pp.length)
+        const N=Math.max(1,PP.length)
         const nM=dayMatches.length
         // Alturas fijas: title 0.4 + (date+ctry) 0.9 + result 0.4 + footer 0.3 = 2.0cm → quedan 7cm para filas
         const rowH=cm(7/N)
@@ -910,7 +919,7 @@ function AdminOffline(){
                   </tr>
                 </thead>
                 <tbody>
-                  {pp.map((jug,ji)=>{
+                  {PP.map((jug,ji)=>{
                     const bg=ji%2===0?'#ebebeb':'#ffffff'
                     const nombre=(jug.name||'').toUpperCase()
                     const disp=nombre.length>9?nombre.slice(0,9)+'…':nombre
@@ -918,7 +927,7 @@ function AdminOffline(){
                       <tr key={jug.id} style={{background:bg,height:rowH}}>
                         <td style={{...cellTD,textAlign:'left',color:'#1a1a1a',fontWeight:600,paddingLeft:cm(0.08),whiteSpace:'nowrap'}}>{String(ji+1).padStart(2,'0')} {disp}</td>
                         {dayMatches.map(m=>{
-                          const pred=(rr[jug.id]||{})[m.id]
+                          const pred=(RR[jug.id]||{})[m.id]
                           const txt=pred&&pred.s1!==null&&pred.s1!==undefined&&pred.s2!==null&&pred.s2!==undefined?`${pred.s1}-${pred.s2}`:'-'
                           return(<td key={m.id} style={cellTD}>{txt}</td>)
                         })}
@@ -977,6 +986,7 @@ function App(){
   useEffect(()=>{const h=()=>setHash(window.location.hash);window.addEventListener('hashchange',h);return()=>window.removeEventListener('hashchange',h)},[])
   if(hash==='#admin'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <Admin/>;return <PinGate/>}
   if(hash==='#admin2'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <AdminOffline/>;return <PinGate/>}
+  if(hash==='#admin3'){const stored=localStorage.getItem('wc26_pin_ok');if(stored==='yes')return <AdminOffline withArnaldo={true}/>;return <PinGate/>}
   return <Jugador/>
 }
 
